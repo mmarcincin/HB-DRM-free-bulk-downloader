@@ -9,7 +9,7 @@ HB DRM-free bulk downloader 0.2
 To specify your preferred label/extension/format for link only, use:
 - https://www.humblebundle.com/downloads?key=XXXXXXXXXXXXXXXX#pdf
 - https://www.humblebundle.com/downloads?key=XXXXXXXXXXXXXXXX#pdf,epub,mp3
-link preferred label will always override global one
+- link preferred label will always override global one
 
 for global preferred label use:
 - #pdf
@@ -19,9 +19,10 @@ for global preferred label use:
 - if some book/game/audio doesn't have preferred label, it'll download first label (unless overridden by %strict)
 
 platform global switches:
-- @windows
+- @windows (default)
 - @mac
 - @linux
+- all of them works but it has to be the exact wording (e.g. @android)
 
 other global switches:
 - %strict (this will download only your preferred label)
