@@ -11,7 +11,7 @@ Bundle files are downloaded sequentially and saved in folder structure as shown 
 To specify your preferred label/extension/format for link only, use:
 - https://www.humblebundle.com/downloads?key=XXXXXXXXXXXXXXXX#pdf
 - https://www.humblebundle.com/downloads?key=XXXXXXXXXXXXXXXX#pdf,epub,mp3
-link preferred label will always override global one
+- link preferred label will always override global one
 
 for global preferred label use:
 - #pdf
