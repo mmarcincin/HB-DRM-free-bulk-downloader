@@ -21,9 +21,10 @@ for global preferred label use:
 - if some book/game/audio doesn't have preferred label, it'll download first label (unless overridden by %strict)
 
 platform global switches:
-- @windows
+- @windows (default)
 - @mac
 - @linux
+- all of them works but it has to be the exact wording (e.g. @android)
 
 other global switches:
 - %strict (this will download only your preferred label)
