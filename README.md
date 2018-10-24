@@ -1,5 +1,5 @@
 # HB DRM-Free bulk downloader
-https://github.com/mmarcincin/HB-books-bulk-downloader/archive/master.zip
+https://github.com/mmarcincin/HB-DRM-free-bulk-downloader/archive/master.zip
 ----------------------
 It's a powershell script (It should work for Windows 7+) which allows you to download books and other DRM-Free files from humble bundle pages (https://www.humblebundle.com/downloads?key=XXXXXXXXXXXXXXXX) in bulk.
 It uses Internet Explorer instance to retrieve the links so all you need to do is login to humble bundle through the Internet Explorer and that's it.
