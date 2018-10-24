@@ -1,5 +1,5 @@
-# HB books bulk downloader
-https://github.com/mmarcincin/HB-books-bulk-downloader/archive/master.zip
+# HB DRM-Free bulk downloader
+https://github.com/mmarcincin/HB-DRM-free-bulk-downloader/archive/master.zip
 ----------------------
 HB DRM-free bulk downloader 0.2
 ----------------------
