@@ -1,6 +1,12 @@
 # HB DRM-Free bulk downloader
 https://github.com/mmarcincin/HB-DRM-free-bulk-downloader/archive/master.zip
 ----------------------
+HB DRM-free bulk downloader 0.3
+----------------------
+- Internet Explorer instance is closed at the start of downloading bundle files now (instead of at the end)
+- you're no longer left with an invisible Internet Explorer instance when you close downloader before it finishes downloading
+
+----------------------
 HB DRM-free bulk downloader 0.2
 ----------------------
 - added support for folder/file paths with the 260+ character length

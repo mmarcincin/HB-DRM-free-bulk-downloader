@@ -1,4 +1,4 @@
-### HB DRM-Free bulk downloader 0.2 by https://github.com/mmarcincin
+### HB DRM-Free bulk downloader 0.3 by https://github.com/mmarcincin
 #$links = "links.txt"
 $invocation = (Get-Variable MyInvocation).Value
 $DownloadDirectory = Split-Path $invocation.MyCommand.Path
@@ -18,7 +18,7 @@ $prefSwitch = 1
 $osSwitch = "default"
 ###
 
-write-host HB DRM-Free bulk downloader 0.2 by https://github.com/mmarcincin
+write-host HB DRM-Free bulk downloader 0.3 by https://github.com/mmarcincin
 write-host `nDownload directory`: $DownloadDirectory`n
 
 $ConCountr1=0
@@ -107,10 +107,6 @@ Get-Content $links | Foreach-Object {
 		write-host $currentDownload "/" $downloadCount - $bundleTitle
 		write-host $requestLink
 		write-host --------------------------------------------------------------
-		
-		#If (!(Test-Path $temp\$bundleTitle)){
-			#	New-Item -ItemType directory -Path $temp\$bundleTitle | Out-Null
-			#}
 
 		if ($osSwitch -ne "default") {
 			if ($doc.getElementsByClassName("dlplatform-list").length -gt 0) {
@@ -132,6 +128,13 @@ Get-Content $links | Foreach-Object {
 			pause
 		}
 		
+		$titleList = New-Object System.Collections.ArrayList
+		$downTitleList = New-Object System.Collections.ArrayList
+		$downLinkList = New-Object System.Collections.ArrayList
+		$curLabelList = New-Object System.Collections.ArrayList
+		
+		### link collection section
+		
 		$hb = $doc.getElementsByClassName("icn")
 		for ($i = 0; $i -lt $hb.length; $i++) {
 			$curTitle = $hb[$i].parentNode
@@ -139,20 +142,14 @@ Get-Content $links | Foreach-Object {
 			$humbleTitle = $humbleName -replace '[^a-zA-Z0-9/_/''/\-/ ]', '_'
 			$humbleTitle = $humbleTitle -replace '/', '_'
 			
-			$chunkLength = $hb.length
-			$chunkNumber = $i+1
-			$host.ui.RawUI.WindowTitle = "D: " + $currentDownload + "/" + $downloadCount +" `| "+ $chunkNumber + "/" + $chunkLength
-			
-			write-host `n$chunkNumber / $chunkLength - $humbleTitle
-			
-			#New-Item -ItemType directory -Path $temp\$bundleTitle\$humbleTitle | Out-Null
+			$titleList.Add($humbleTitle) > $null
 			
 			$downAlready = -1
 			if ($curTitle.getElementsByClassName("download-buttons")[0].innerHTML.length -gt "0") {
 				$downLabels = $curTitle.getElementsByClassName("download-buttons")[0].getElementsByClassName("label")
 				for ($j = 0; $j -lt $prefLabels.length; $j++) {
+					for ($k = $downLabels.length-1; $k -ge 0; $k--) {
 					if (($downAlready -eq "1") -and ($prefSwitch -eq "1")) { break; }
-					for ($k = 0; $k -lt $downLabels.length; $k++) {
 						$curLabel = $downLabels[$k].innerHTML
 						if (($curLabel.ToLower() -eq $prefLabels[$j].ToLower().trim()) -or ($prefLabels[0].ToLower().trim() -eq "none")) {
 							$downAlready = 1
@@ -160,17 +157,10 @@ Get-Content $links | Foreach-Object {
 							$downLink = $downLabels[$k].parentNode.getElementsByClassName("a")[0].href
 							$downName = $downLink.split("?")[0].split("/")
 							$downTitle = $downName[$downName.length-1]
-							write-host $curLabel - $downTitle
-							#$wc = New-Object System.Net.WebClient
-							$downDest = "$temp\$bundleTitle\$humbleTitle\$downTitle"
-							#$downDest
-							If (!(Test-Path $DownloadDirectory\$bundleTitle\$humbleTitle\$downTitle)){
-								#$wc.DownloadFile($downLink, $downDest)
-								If (!(Test-Path $temp\$bundleTitle\$humbleTitle)){ New-Item -ItemType directory -Path $temp\$bundleTitle\$humbleTitle | Out-Null }
-								downFile $downLink $downDest
-							} else {
-								write-host File downloaded already, skipping...
-							}
+							
+							$downTitleList.Add($downTitle) > $null
+							$downLinkList.Add($downLink) > $null
+							$curLabelList.Add($curLabel) > $null
 						}
 					}
 				}
@@ -179,33 +169,62 @@ Get-Content $links | Foreach-Object {
 			if (($downAlready -eq "-1") -and ($strictSwitch -eq "0")) {
 				write-host `-`- Preferred label not found`, downloading first label `-`-
 				$curLabel = $downLabels[$downLabels.length-1].innerHTML
-				
 				$downLink = $downLabels[$downLabels.length-1].parentNode.getElementsByClassName("a")[0].href
 				$downName = $downLink.split("?")[0].split("/")
 				$downTitle = $downName[$downName.length-1]
+				
+				$downTitleList.Add($downTitle) > $null
+				$downLinkList.Add($downLink) > $null
+				$curLabelList.Add($curLabel) > $null
+			}
+			
+			$downTitleList.Add($i) > $null
+			$downLinkList.Add($i) > $null
+			$curLabelList.Add($i) > $null
+			}
+		}
+		$ie.quit()
+		
+		### download section
+		$downIndex = 0
+		for ($i = 0; $i -lt $titleList.Count; $i++) {
+			$humbleTitle = $titleList[$i]
+			$chunkLength = $titleList.Count
+			$chunkNumber = $i+1
+			$host.ui.RawUI.WindowTitle = "D: " + $currentDownload + "/" + $downloadCount +" `| "+ $chunkNumber + "/" + $chunkLength
+			
+			write-host `n$chunkNumber / $chunkLength - $humbleTitle
+			
+			for ($j = $downIndex; $j -lt $downTitleList.Count; $j++) {
+				if ($downTitleList[$j] -eq $i) { $downIndex = $j + 1; break; }
+				
+				$downTitle = $downTitleList[$j]
+				$downLink = $downLinkList[$j]
+				$curLabel = $curLabelList[$j]
+				
 				write-host $curLabel - $downTitle
-				#$wc = New-Object System.Net.WebClient
+
 				$downDest = "$temp\$bundleTitle\$humbleTitle\$downTitle"
-				#$downDest
+
 				If (!(Test-Path $DownloadDirectory\$bundleTitle\$humbleTitle\$downTitle)){
 					#$wc.DownloadFile($downLink, $downDest)
 					If (!(Test-Path $temp\$bundleTitle\$humbleTitle)){ New-Item -ItemType directory -Path $temp\$bundleTitle\$humbleTitle | Out-Null }
-					downFile $downLink $downDest
-				} else {
-					write-host File downloaded already, skipping...
-				}
-			}
+						downFile $downLink $downDest
+					} else {
+						write-host File downloaded already, skipping...
+					}
 			
 			If (!(Test-Path $DownloadDirectory\$bundleTitle\$humbleTitle)){
 			New-Item -ItemType directory -Path $DownloadDirectory\$bundleTitle\$humbleTitle | Out-Null
 			}
 			Move-Item -Path $temp\$bundleTitle\$humbleTitle\* -Destination $DownloadDirectory\$bundleTitle\$humbleTitle
+			}
 		}
-	}
+		
 	Remove-Item "$temp\*" -Recurse
 	write-host ==============================================================
-	$ie.quit()
-	Start-Sleep -Seconds 2
+	
+	Start-Sleep -Seconds 4
 	} else {
 		if ($_.indexOf("#") -eq "0") {
 			$prefGLabels = $_.split("#")[1]
