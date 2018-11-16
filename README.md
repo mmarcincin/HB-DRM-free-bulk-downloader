@@ -49,7 +49,7 @@ Powershell ExecutionPolicy change
 start RUN.bat to launch the script
 for editing the script itself open HB-books_download.ps1 in notepad (or notepad++,etc...)
 
-If the window closes fast after starting RUN.bat (or it doesn't show on startup when using that option): 
+If the window closes fast after starting RUN.bat, follow these steps: 
 1. Go to any folder (file explorer) and choose file > open windows powershell > 
    > open windows powershell as administrator.
 2. In the Windows PowerShell window type: get-ExecutionPolicy.
