@@ -15,6 +15,7 @@ To specify your preferred label/extension/format for link only, use:
 
 for global preferred label use:
 - #pdf
+- #pdf,epub,mp3
 - https://www.humblebundle.com/downloads?key=XXXXXXXXXXXXXXXX
 - https://www.humblebundle.com/downloads?key=XXXXXXXXXXXXXXXX
 - #none (default, this will return to downloading all versions)
