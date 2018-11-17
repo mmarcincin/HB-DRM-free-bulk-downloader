@@ -2,6 +2,7 @@
 https://github.com/mmarcincin/HB-DRM-free-bulk-downloader/archive/master.zip
 ----------------------
 HB DRM-free bulk downloader 0.3.1
+----------------------
 - fixed: the default switch/setting didn't download all versions
 
 ----------------------
