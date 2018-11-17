@@ -167,7 +167,7 @@ Get-Content $links | Foreach-Object {
 				
 				### if preferred label is not found, it'll download the first label unless %strict global switch is applied
 			if (($downAlready -eq "-1") -and ($strictSwitch -eq "0")) {
-				write-host `-`- Preferred label not found`, downloading first label `-`-
+				#write-host `-`- Preferred label not found`, downloading first label `-`-
 				$curLabel = $downLabels[$downLabels.length-1].innerHTML
 				$downLink = $downLabels[$downLabels.length-1].parentNode.getElementsByClassName("a")[0].href
 				$downName = $downLink.split("?")[0].split("/")
