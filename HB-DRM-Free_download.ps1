@@ -1,4 +1,4 @@
-### HB DRM-Free bulk downloader 0.3 by https://github.com/mmarcincin
+### HB DRM-Free bulk downloader 0.3.1 by https://github.com/mmarcincin
 #$links = "links.txt"
 $invocation = (Get-Variable MyInvocation).Value
 $DownloadDirectory = Split-Path $invocation.MyCommand.Path
@@ -149,7 +149,7 @@ Get-Content $links | Foreach-Object {
 				$downLabels = $curTitle.getElementsByClassName("download-buttons")[0].getElementsByClassName("label")
 				for ($j = 0; $j -lt $prefLabels.length; $j++) {
 					for ($k = $downLabels.length-1; $k -ge 0; $k--) {
-					if (($downAlready -eq "1") -and ($prefSwitch -eq "1")) { break; }
+					if (($downAlready -eq "1") -and ($prefSwitch -eq "1") -and ($prefLabels[0].ToLower().trim() -ne "none")) { break; }
 						$curLabel = $downLabels[$k].innerHTML
 						if (($curLabel.ToLower() -eq $prefLabels[$j].ToLower().trim()) -or ($prefLabels[0].ToLower().trim() -eq "none")) {
 							$downAlready = 1
