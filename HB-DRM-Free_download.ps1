@@ -18,7 +18,7 @@ $prefSwitch = 1
 $osSwitch = "default"
 ###
 
-write-host HB DRM-Free bulk downloader 0.3 by https://github.com/mmarcincin
+write-host HB DRM-Free bulk downloader 0.3.1 by https://github.com/mmarcincin
 write-host `nDownload directory`: $DownloadDirectory`n
 
 $ConCountr1=0
