@@ -1,6 +1,12 @@
 # HB DRM-Free bulk downloader
 https://github.com/mmarcincin/HB-DRM-free-bulk-downloader/archive/master.zip
 ----------------------
+HB DRM-free bulk downloader 0.3.2
+----------------------
+- download links which doesn't contain DRM-Free files will be skipped after 10 sec
+- corrected titles for non-bundle DRM-Free pages (like free games/store purchases)
+
+----------------------
 HB DRM-free bulk downloader 0.3.1
 ----------------------
 - fixed: the default switch/setting didn't download all versions
@@ -31,7 +37,8 @@ for global preferred label use:
 - if some book/game/audio doesn't have preferred label, it'll download first label (unless overridden by %strict)
 
 platform global switches:
-- @windows (default)
+- @default (needed only when you want to reset it back, for exmaple from mac back to default for next set of links)
+- @windows (usually selected by default; if you really want to reset it use @default instead)
 - @mac
 - @linux
 - all of them works but it has to be the exact wording (e.g. @android)

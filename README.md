@@ -4,7 +4,7 @@ https://github.com/mmarcincin/HB-DRM-free-bulk-downloader/archive/master.zip
 It's a powershell script (It should work for Windows 7+) which allows you to download books and other DRM-Free files from humble bundle pages (https://www.humblebundle.com/downloads?key=XXXXXXXXXXXXXXXX) in bulk.
 It uses Internet Explorer instance to retrieve the links so all you need to do is login to humble bundle through the Internet Explorer and that's it.
 ----------------------
-HB DRM-Free bulk downloader 0.3.1
+HB DRM-Free bulk downloader 0.3.2
 ----------------------
 Bundle files are downloaded sequentially and saved in folder structure as shown in this example: downloads\bundleName\bookName\specificBookFile.extension
 
@@ -22,7 +22,8 @@ for global preferred label use:
 - if some book/game/audio doesn't have preferred label, it'll download first label (unless overridden by %strict)
 
 platform global switches:
-- @windows (default)
+- @default (needed only when you want to reset it back, for exmaple from mac back to default for next set of links)
+- @windows (usually selected by default; if you really want to reset it use @default instead)
 - @mac
 - @linux
 - all of them works but it has to be the exact wording (e.g. @android)

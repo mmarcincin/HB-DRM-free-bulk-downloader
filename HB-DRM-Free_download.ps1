@@ -1,4 +1,4 @@
-### HB DRM-Free bulk downloader 0.3.1 by https://github.com/mmarcincin
+### HB DRM-Free bulk downloader 0.3.2 by https://github.com/mmarcincin
 #$links = "links.txt"
 $invocation = (Get-Variable MyInvocation).Value
 $DownloadDirectory = Split-Path $invocation.MyCommand.Path
@@ -18,7 +18,7 @@ $prefSwitch = 1
 $osSwitch = "default"
 ###
 
-write-host HB DRM-Free bulk downloader 0.3.1 by https://github.com/mmarcincin
+write-host HB DRM-Free bulk downloader 0.3.2 by https://github.com/mmarcincin
 write-host `nDownload directory`: $DownloadDirectory`n
 
 $ConCountr1=0
@@ -94,12 +94,19 @@ Get-Content $links | Foreach-Object {
 		#while($ie.Busy) { Start-Sleep -Milliseconds 100 }
 		while($ie.Busy -or $ie.ReadyState -ne "4") { Start-Sleep -Milliseconds 100 }
 		
-		while (($ie.Document.getElementsByClassName("whitebox-redux").length -eq "0") -or ($ie.Document.getElementsByClassName("whitebox-redux")[0].innerText.length -eq "0") -or ($ie.Document.getElementsByClassName("icn").length -eq "0") -or ($ie.Document.getElementsByClassName("icn")[0].innerText.length -eq "0")) { Start-Sleep -Milliseconds 100 }
+		$drmCheckCounter = 0
+		while (($ie.Document.getElementsByClassName("whitebox-redux").length -eq "0") -or ($ie.Document.getElementsByClassName("whitebox-redux")[0].innerText.length -eq "0") -or ($ie.Document.getElementsByClassName("icn").length -eq "0") -or ($ie.Document.getElementsByClassName("icn")[0].innerText.length -eq "0")) { 
+		Start-Sleep -Milliseconds 100
+		$drmCheckCounter += 1
+		if ($drmCheckCounter -ge 100) {
+		break;
+		}
+		}
 		Start-Sleep -Seconds 1
 		
 		$doc = $ie.Document
 		$docTitle = $doc.getElementsByTagName("title")[0].innerText.trim()
-		$bundleName = $docTitle.substring(0, $docTitle.lastIndexOf("(") - 1)
+		if ($docTitle.lastIndexOf("(") -eq -1) {$bundleName = $docTitle;} else {$bundleName = $docTitle.substring(0, $docTitle.lastIndexOf("(") - 1)}
 		$bundleName = [Text.Encoding]::ASCII.GetString([Text.Encoding]::GetEncoding("Cyrillic").GetBytes($bundleName))
 		$bundleTitle = $bundleName -replace '[^a-zA-Z0-9/_/''/\-/ ]', '_'
 		$bundleTitle = $bundleTitle -replace '/', '_'
