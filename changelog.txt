@@ -1,6 +1,12 @@
 # HB DRM-Free bulk downloader
 https://github.com/mmarcincin/HB-DRM-free-bulk-downloader/archive/master.zip
 ----------------------
+HB DRM-free bulk downloader 0.3.3
+----------------------
+- when trying to run the script, you will be asked to run at least PowerShell 3+
+  download link: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-windows-powershell?view=powershell-6
+
+----------------------
 HB DRM-free bulk downloader 0.3.2
 ----------------------
 - download links which doesn't contain DRM-Free files will be skipped after 10 sec
@@ -57,11 +63,14 @@ only # and % switches supports multiple parameters
 ----------------------
 HB books bulk downloader 0.1
 ----------------------
-It's a powershell script (It should work for Windows 7+) which allows you to download books from humble bundle pages (https://www.humblebundle.com/downloads?key=XXXXXXXXXXXXXXXX) in bulk.
+It's a powershell script which allows you to download books from humble bundle pages (https://www.humblebundle.com/downloads?key=XXXXXXXXXXXXXXXX) in bulk.
+It works natively for Windows 8+, Windows 7 required downloading the Powershell 3+, link below.
 It uses Internet Explorer instance to retrieve the links so all you need to do is login to humble bundle through the internet explorer and that's it.
 
 Right now the script puts bundle into its own folder, each book into the subfolder and all versions inside. The download is sequential for now.
 I'll add some options later, like download only some versions (pdf, epub, etc..) and maybe different folder sorting by book version instead of book name (for example, all pdf in one folder).
+
+To install newer Powershell for Windows 7, visit this link: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-windows-powershell?view=powershell-6
 
 Powershell ExecutionPolicy change
 ----------------------
