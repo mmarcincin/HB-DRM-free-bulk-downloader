@@ -8,7 +8,7 @@ It uses Internet Explorer instance to retrieve the links so all you need to do i
 To install newer Powershell on Windows 7, visit this link: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-windows-powershell?view=powershell-6
 
 ----------------------
-HB DRM-Free bulk downloader 0.3.3
+HB DRM-Free bulk downloader 0.3.4
 ----------------------
 Bundle files are downloaded sequentially and saved in folder structure as shown in this example: downloads\bundleName\bookName\specificBookFile.extension
 
@@ -31,6 +31,18 @@ platform global switches:
 - @mac
 - @linux
 - all of them works but it has to be the exact wording (e.g. @android)
+
+md5 global switches:
+- !md5+ (default, enable md5 file integrity check)
+- !md5- (disable md5 file integrity check)
+- !md5s+ (default, enable md5 hash check/file integrity of previously stored/downloaded files, disabled if you use !md5-)
+- !md5s- (disable md5 hash check/file integrity of previously stored/downloaded files)
+
+log files:
+- LOG-all.txt -- complete log(downloads + errors)
+- LOG-error.txt -- log of errors only (md5 fails and unsuccessful downloads)
+
+- if you use !md5-, LOG-all.txt and LOG-error.txt will contain only unsuccessful downloads
 
 other global switches:
 - %strict (this will download only your preferred label)
@@ -64,3 +76,22 @@ If the window closes fast after starting RUN.bat, follow these steps:
 4. After that the RUN.bat should work as intented.
 
 If you'd like to create a shortcut for the script, you just need to make shortcut of RUN.bat file.
+
+Possible Errors
+----------------------
+If your bundle haven't started downloading at all for 1+ min, open Internet Explorer and go to https://www.humblebundle.com/
+Try to click on the dropdown menu button in top right corner, it doesn't respond most likely. You also can't see any bundles on the front page.
+
+To make it work, follow these steps:
+1. Open Internet Explorer, press alt (the toolbar will show up), go to Tools > Internet Options > Security Tab(at the top) > Trusted sites
+   - move the vertical bar to the bottom (Low option)
+   - click on Sites button and add 'https://www.humblebundle.com/' into the list (otherwise the site would load only partially)
+2. Enable Protected Mode for Trusted sites (ReadyState was blank when this was disabled so script was stuck).
+3. It's possible you'll get logged out of Humble Bundle after changing to Protected Mode so just login there again.
+
+My script loads IE instance only for links and once the download starts, the IE instance should be already closed.
+Killing Internet Explorer instances might help if you encountered problems before it started working. 
+
+The fastest way to do it is to run this 'stop process' command in PowerShell: get-process iexplore.exe | stop-process
+
+You can check afterwards with 'get-process iexplore.exe', if you've got an error it means the IE doesn't have any windows opened. If you still have the iexplore.exe there it means you have to launch Powershell as administrator (option in File menu in your File Explorer) and run the same 'stop process' command again.
