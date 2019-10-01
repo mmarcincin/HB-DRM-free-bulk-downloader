@@ -11,7 +11,8 @@ To install newer Powershell on Windows 7, visit this link: https://docs.microsof
 HB DRM-Free bulk downloader 0.3.4
 ----------------------
 Bundle files are downloaded sequentially and saved in folder structure as shown in this example: downloads\bundleName\bookName\specificBookFile.extension
-It supports MD5 hash file check now.
+
+- latest addition - support for MD5 hash file check (more info below)
 
 To specify your preferred label/extension/format for link only, use:
 - https://www.humblebundle.com/downloads?key=XXXXXXXXXXXXXXXX#pdf
