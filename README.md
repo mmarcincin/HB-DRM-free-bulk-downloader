@@ -49,6 +49,7 @@ log files:
 other global switches:
 - %strict (this will download only your preferred label)
 - %normal (default, this will return to downloading at least 1 label)
+
 - %pref (default, download first found preferred label in list and skip others)
 - %all (download all preferred labels)
 
