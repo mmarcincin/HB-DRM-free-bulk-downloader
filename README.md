@@ -43,13 +43,13 @@ md5 global switches:
 log files:
 - LOG-all.txt -- complete log(downloads + errors)
 - LOG-error.txt -- log of errors only (md5 fails and unsuccessful downloads)
-
 - if you use !md5-, LOG-all.txt and LOG-error.txt will contain only unsuccessful downloads
 
 other global switches:
-- %strict (this will download only your preferred label)
 - %normal (default, this will return to downloading at least 1 label)
+- %strict (this will download only your preferred label)
 
+another set of global switches:
 - %pref (default, download first found preferred label in list and skip others)
 - %all (download all preferred labels)
 
