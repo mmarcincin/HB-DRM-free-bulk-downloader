@@ -1,5 +1,5 @@
 #Requires -Version 3.0
-### HB DRM-Free bulk downloader 0.3.4 by https://github.com/mmarcincin
+### HB DRM-Free bulk downloader 0.3.5 by https://github.com/mmarcincin
 #$links = "links.txt"
 $invocation = (Get-Variable MyInvocation).Value
 $DownloadDirectory = Split-Path $invocation.MyCommand.Path
@@ -32,7 +32,7 @@ $titleErrorLog = 0
 $md5Errors = 0
 $notFoundErrors = 0
 
-write-host HB DRM-Free bulk downloader 0.3.4 by https://github.com/mmarcincin
+write-host HB DRM-Free bulk downloader 0.3.5 by https://github.com/mmarcincin
 write-host `nDownload directory`: $DownloadDirectory`n
 
 $ConCountr1=0
@@ -144,6 +144,8 @@ Get-Content $links | Foreach-Object {
 			Start-Sleep -Milliseconds 100
 			$drmCheckCounter += 1
 			if ($drmCheckCounter -ge 100) {
+				if ($ie.Document.getElementsByClassName("mosaic-view").length -eq "0") { $ie.quit(); write-host "`nBundle information is not visible.`nCheck README file for 'Possible Errors - download stuck at the beginning'.`n"; pause; Exit;}
+				write-host "`nNo DRM-Free content detected for this bundle (10 seconds waiting time).`n"
 				break;
 			}
 		}
@@ -155,6 +157,9 @@ Get-Content $links | Foreach-Object {
 		$bundleName = [Text.Encoding]::ASCII.GetString([Text.Encoding]::GetEncoding("Cyrillic").GetBytes($bundleName))
 		$bundleTitle = $bundleName -replace '[^a-zA-Z0-9/_/''/\-/ ]', '_'
 		$bundleTitle = $bundleTitle -replace '/', '_'
+		$bundleTitle = $bundleTitle.trim()
+		if ($bundleTitle -eq "Humble Bundle - Key already claimed") { $bundleTitle += "`n`nTo download this bundle you need to open Internet Explorer and `nlogin into the Humble Bundle account tied to this bundle.`nOnce you're logged in, you can close the IE window.`n" }
+		
 		write-host ==============================================================
 		write-host $currentDownload "/" $downloadCount - $bundleTitle
 		write-host $requestLink
@@ -196,6 +201,7 @@ Get-Content $links | Foreach-Object {
 			$humbleName = [Text.Encoding]::ASCII.GetString([Text.Encoding]::GetEncoding("Cyrillic").GetBytes($curTitle.getAttribute("data-human-name")))
 			$humbleTitle = $humbleName -replace '[^a-zA-Z0-9/_/''/\-/ ]', '_'
 			$humbleTitle = $humbleTitle -replace '/', '_'
+			$humbleTitle = $humbleTitle.trim()
 			
 			$titleList.Add($humbleTitle) > $null
 			
@@ -216,7 +222,7 @@ Get-Content $links | Foreach-Object {
 							$md5c = $downLabels[$k].parentNode.parentNode.getElementsByClassName("dlmd5")[0]
 							$md5ct = $md5c.innerText.trim()
 							$downName = $downLink.split("?")[0].split("/")
-							$downTitle = $downName[$downName.length-1]
+							$downTitle = $downName[$downName.length-1].trim()
 							
 							$downTitleList.Add($downTitle) > $null
 							$downLinkList.Add($downLink) > $null
@@ -236,7 +242,7 @@ Get-Content $links | Foreach-Object {
 				$md5c = $downLabels[$downLabels.length-1].parentNode.parentNode.getElementsByClassName("dlmd5")[0]
 				$md5ct = $md5c.innerText.trim()
 				$downName = $downLink.split("?")[0].split("/")
-				$downTitle = $downName[$downName.length-1]
+				$downTitle = $downName[$downName.length-1].trim()
 				
 				$downTitleList.Add($downTitle) > $null
 				$downLinkList.Add($downLink) > $null

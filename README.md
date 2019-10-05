@@ -8,11 +8,13 @@ It uses Internet Explorer instance to retrieve the links so all you need to do i
 To install newer Powershell on Windows 7, visit this link: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-windows-powershell?view=powershell-6
 
 ----------------------
-HB DRM-Free bulk downloader 0.3.4
+HB DRM-Free bulk downloader 0.3.5
 ----------------------
 Bundle files are downloaded sequentially and saved in folder structure as shown in this example: downloads\bundleName\bookName\specificBookFile.extension
 
-- latest addition - support for MD5 hash file check (more info below)
+latest additions:
+- support for MD5 hash file check (more info below)
+- it's possible to download bundles with leading/trailing space in titles now (thanks to ratinoxone from GitHub)
 
 To specify your preferred label/extension/format for link only, use:
 - https://www.humblebundle.com/downloads?key=XXXXXXXXXXXXXXXX#pdf
@@ -80,9 +82,9 @@ If the window closes fast after starting RUN.bat, follow these steps:
 
 If you'd like to create a shortcut for the script, you just need to make shortcut of RUN.bat file.
 
-Possible Errors
+Possible Errors - download stuck at the beginning
 ----------------------
-If your bundle haven't started downloading at all for 1+ min, open Internet Explorer and go to https://www.humblebundle.com/
+If your bundle haven't started downloading already for 10+ sec and you were redirected here then open your Internet Explorer and go to https://www.humblebundle.com/.
 Try to click on the dropdown menu button in top right corner, it doesn't respond most likely. You also can't see any bundles on the front page.
 
 To make it work, follow these steps:
@@ -93,8 +95,26 @@ To make it work, follow these steps:
 3. It's possible you'll get logged out of Humble Bundle after changing to Protected Mode so just login there again.
 
 My script loads IE instance only for links and once the download starts, the IE instance should be already closed.
+If you saw the PowerShell message to check this error, the IE instance is already closed as well.
+
 Killing Internet Explorer instances might help if you encountered problems before it started working. 
 
-The fastest way to do it is to run this 'stop process' command in PowerShell: get-process iexplore.exe | stop-process
+The fastest way to do it is to run this 'stop process' command in PowerShell: 
+get-process iexplore.exe | stop-process
 
 You can check afterwards with 'get-process iexplore.exe', if you've got an error it means the IE doesn't have any windows opened. If you still have the iexplore.exe there it means you have to launch Powershell as administrator (option in File menu in your File Explorer) and run the same 'stop process' command again.
+
+Possible Errors - 'Humble Bundle - Key already claimed'
+----------------------
+If you're getting 'Humble Bundle - Key already claimed' instead of bundle title when you run the script, it means you're not logged into your Humble Bundle account (which owns the bundle) in the Internet Explorer.
+
+Possible Errors - 'Exception from HRESULT: 0x800A01B6'
+----------------------
+If you're getting 'Exception from HRESULT: 0x800A01B6' error, try launching RUN.bat as administrator.
+You could also follow steps in 'Possible Errors - download stuck at the beginning' above.
+
+Possible Errors - unremovable folder with leading/trailing space
+----------------------
+If my script created folder with space (" ") in name and you can't remove it now, you could try this to fix it:
+quote by JustSolvedIt from https://superuser.com/questions/565334/rename-delete-windows-x64-folder-with-leading-and-trailing-space/911994#911994
+> I just had a similar problem with folder "Monuments - Discography " created in linux. Windows Vista and Windows 7 couldn't recognize this folder as a valid data and when I tried to rename or remove it I got Info message saying that folder does not exist etc. The solution was to explore a dir with 7zip file manager and rename the folder by removing a white space from the end. Simple. Now I can enjoy the music once again :D
