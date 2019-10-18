@@ -1,6 +1,11 @@
 # HB DRM-Free bulk downloader
 https://github.com/mmarcincin/HB-DRM-free-bulk-downloader/archive/master.zip
 ----------------------
+HB DRM-free bulk downloader 0.3.6
+----------------------
+- fixed bundle title retrieval and checks for key already claimed (not logged in) state
+
+----------------------
 HB DRM-free bulk downloader 0.3.5
 ----------------------
 - it's possible to download bundles with leading/trailing space in titles now (thanks to ratinoxone from GitHub)

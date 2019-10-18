@@ -8,7 +8,7 @@ It uses Internet Explorer instance to retrieve the links so all you need to do i
 To install newer Powershell on Windows 7, visit this link: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-windows-powershell?view=powershell-6
 
 ----------------------
-HB DRM-Free bulk downloader 0.3.5
+HB DRM-Free bulk downloader 0.3.6
 ----------------------
 Bundle files are downloaded sequentially and saved in folder structure as shown in this example: downloads\bundleName\bookName\specificBookFile.extension
 

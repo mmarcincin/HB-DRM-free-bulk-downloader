@@ -1,5 +1,5 @@
 #Requires -Version 3.0
-### HB DRM-Free bulk downloader 0.3.5 by https://github.com/mmarcincin
+### HB DRM-Free bulk downloader 0.3.6 by https://github.com/mmarcincin
 #$links = "links.txt"
 $invocation = (Get-Variable MyInvocation).Value
 $DownloadDirectory = Split-Path $invocation.MyCommand.Path
@@ -32,7 +32,7 @@ $titleErrorLog = 0
 $md5Errors = 0
 $notFoundErrors = 0
 
-write-host HB DRM-Free bulk downloader 0.3.5 by https://github.com/mmarcincin
+write-host HB DRM-Free bulk downloader 0.3.6 by https://github.com/mmarcincin
 write-host `nDownload directory`: $DownloadDirectory`n
 
 $ConCountr1=0
@@ -143,6 +143,7 @@ Get-Content $links | Foreach-Object {
 		while (($ie.Document.getElementsByClassName("whitebox-redux").length -eq "0") -or ($ie.Document.getElementsByClassName("whitebox-redux")[0].innerText.length -eq "0") -or ($ie.Document.getElementsByClassName("icn").length -eq "0") -or ($ie.Document.getElementsByClassName("icn")[0].innerText.length -eq "0")) { 
 			Start-Sleep -Milliseconds 100
 			$drmCheckCounter += 1
+			if (($ie.Document.getElementsByClassName("page_title")[0].getElementsByTagName("h1").length -gt 0) -and ($ie.Document.getElementsByClassName("page_title")[0].getElementsByTagName("h1")[0].innerHTML.toLower() -eq "this page is claimed")) { break; }
 			if ($drmCheckCounter -ge 100) {
 				if ($ie.Document.getElementsByClassName("mosaic-view").length -eq "0") { $ie.quit(); write-host "`nBundle information is not visible.`nCheck README file for 'Possible Errors - download stuck at the beginning'.`n"; pause; Exit;}
 				write-host "`nNo DRM-Free content detected for this bundle (10 seconds waiting time).`n"
@@ -152,7 +153,11 @@ Get-Content $links | Foreach-Object {
 		Start-Sleep -Seconds 1
 		
 		$doc = $ie.Document
-		$docTitle = $doc.getElementsByTagName("title")[0].innerText.trim()
+		if (($doc.getElementsByTagName("title").length -gt 0) -and ($doc.getElementsByTagName("title")[0].innerHTML.trim().length -gt 0)) {
+			$docTitle = $doc.getElementsByTagName("title")[0].innerText.trim()
+		} else {	
+			$docTitle = $doc.getElementById("hibtext").innerHTML.split(">")[1].split("<")[0].trim()
+		}
 		if ($docTitle.lastIndexOf("(") -eq -1) {$bundleName = $docTitle;} else {$bundleName = $docTitle.substring(0, $docTitle.lastIndexOf("(") - 1)}
 		$bundleName = [Text.Encoding]::ASCII.GetString([Text.Encoding]::GetEncoding("Cyrillic").GetBytes($bundleName))
 		$bundleTitle = $bundleName -replace '[^a-zA-Z0-9/_/''/\-/ ]', '_'
@@ -186,7 +191,7 @@ Get-Content $links | Foreach-Object {
 			write-host Failed to switch OS platform
 			pause
 		}
-		
+
 		$titleList = New-Object System.Collections.ArrayList
 		$downTitleList = New-Object System.Collections.ArrayList
 		$downLinkList = New-Object System.Collections.ArrayList
