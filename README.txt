@@ -20,8 +20,10 @@ Both switches and links are entered in the links.txt file which will open once y
 If you want to make shortcut for the script, create shortcut for the RUN.bat.
 
 Example of links.txt:
-> #pdf
-> https://www.humblebundle.com/downloads?key=XXXXXXXXXXXXXXXX
+```
+#pdf
+https://www.humblebundle.com/downloads?key=XXXXXXXXXXXXXXXX
+```
 
 To specify your preferred label/extension/format for link only, use:
 - https://www.humblebundle.com/downloads?key=XXXXXXXXXXXXXXXX#pdf
@@ -44,7 +46,7 @@ platform global switches:
 - all of them works but it has to be the exact wording (e.g. @android)
 
 md5 global switches:
-- !md5+ (default, enable md5 file integrity check, to enable )
+- !md5+ (default, enable md5 file integrity check)
 - !md5- (disable md5 file integrity check completely; !md5s- is not needed)
 - !md5s+ (default, enable md5 hash check/file integrity of previously stored/downloaded files in addition to the files you just downloaded, disabled if you use !md5-)
 - !md5s- (disable md5 hash check/file integrity of previously stored/downloaded files)
