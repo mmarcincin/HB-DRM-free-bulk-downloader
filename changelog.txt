@@ -1,6 +1,12 @@
 # HB DRM-Free bulk downloader
 https://github.com/mmarcincin/HB-DRM-free-bulk-downloader/archive/master.zip
 ----------------------
+HB DRM-free bulk downloader 0.3.7
+----------------------
+- added option for script to open Internet Explorer window to let you to log-in to your Humble Bundle account
+- added solution for 'Possible Error - missing Internet Explorer' into README
+
+----------------------
 HB DRM-free bulk downloader 0.3.6
 ----------------------
 - fixed bundle title retrieval and checks for key already claimed (not logged in) state

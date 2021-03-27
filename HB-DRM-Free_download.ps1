@@ -1,5 +1,5 @@
 #Requires -Version 3.0
-### HB DRM-Free bulk downloader 0.3.6 by https://github.com/mmarcincin
+### HB DRM-Free bulk downloader 0.3.7 by https://github.com/mmarcincin
 #$links = "links.txt"
 $invocation = (Get-Variable MyInvocation).Value
 $DownloadDirectory = Split-Path $invocation.MyCommand.Path
@@ -23,6 +23,10 @@ $osSwitch = "default"
 $md5Switch = 1
 #md5 hash check of previously stored/downloaded files enabled
 $md5sSwitch = 1
+#not implemented - for future use
+$genListSwitch = 0
+#if 1 opens visible Internet Explorer window to login
+$loginSwitch = 0
 ###
 
 $bundleLog = 0
@@ -32,15 +36,15 @@ $titleErrorLog = 0
 $md5Errors = 0
 $notFoundErrors = 0
 
-write-host HB DRM-Free bulk downloader 0.3.6 by https://github.com/mmarcincin
+write-host HB DRM-Free bulk downloader 0.3.7 by https://github.com/mmarcincin
 write-host `nDownload directory`: $DownloadDirectory`n
 
-$ConCountr1=0
+$ConCountr1 = 0
 ### Test Internet connection
 While (!(Test-Connection -ComputerName humblebundle.com -count 1 -Quiet -ErrorAction SilentlyContinue )) {
 	Write-Host -ForegroundColor Red "Waiting for internet connection to continue..."
 	Start-Sleep -Seconds 10
-	$ConCountr1 +=1
+	$ConCountr1 += 1
 	If ($ConCountr1 -ge 12) {
 		Write-Host -ForegroundColor Red "Script terminated because of no internet connection/humblebundle response for 120 seconds."
 		Start-Sleep -Seconds 5
@@ -112,6 +116,8 @@ function md5hash($path)
 
 $currentDownload = 0
 $downloadCount = Get-Content $links | Where {$_.indexOf("https://www.humblebundle.com/downloads?key=") -eq "0"} | Measure-Object -Line | Select -ExpandProperty Lines
+$emptyCheck = Get-Content $links | Measure-Object -Line | Select -ExpandProperty Lines
+if ($emptyCheck -eq "0") { echo "*login" | Out-File $links -append }
 
 Get-Content $links | Foreach-Object {
 	if ($_.indexOf("https://www.humblebundle.com/downloads?key=") -eq "0") {
@@ -151,7 +157,7 @@ Get-Content $links | Foreach-Object {
 			}
 		}
 		Start-Sleep -Seconds 1
-		
+		#pause
 		$doc = $ie.Document
 		if (($doc.getElementsByTagName("title").length -gt 0) -and ($doc.getElementsByTagName("title")[0].innerHTML.trim().length -gt 0)) {
 			$docTitle = $doc.getElementsByTagName("title")[0].innerText.trim()
@@ -163,7 +169,23 @@ Get-Content $links | Foreach-Object {
 		$bundleTitle = $bundleName -replace '[^a-zA-Z0-9/_/''/\-/ ]', '_'
 		$bundleTitle = $bundleTitle -replace '/', '_'
 		$bundleTitle = $bundleTitle.trim()
-		if ($bundleTitle -eq "Humble Bundle - Key already claimed") { $bundleTitle += "`n`nTo download this bundle you need to open Internet Explorer and `nlogin into the Humble Bundle account tied to this bundle.`nOnce you're logged in, you can close the IE window.`n" }
+		
+		$allScripts = $ie.Document.getElementsByTagName("script")
+		for ($i = 0; $i -lt $allScripts.length; $i++) {
+			if ($allScripts[$i].src.length -eq 0 -and $allScripts[$i].text.IndexOf("window.models.user_json") -ne -1) {
+				$loginCheck = $allScripts[$i].text.substring($allScripts[$i].text.indexOf("window.models.user_json")).split("`n")[0].replace(" ","");
+				if ($loginCheck -ne "window.models.user_json={};") {$loginInfoJSON = $loginCheck.substring($loginCheck.indexOf("={")+1,$loginCheck.length-$loginCheck.indexOf("={")-2); $loginAccount = ($loginInfoJSON | ConvertFrom-Json).email} else {$loginAccount = "none"}
+			break;
+			}
+		}
+		#loginAccount none if not logged in, email if logged
+		if ($bundleTitle -eq "Humble Bundle - Key already claimed") {
+			if ($loginAccount -eq "none") {
+				$bundleTitle += "`n`nYou are currently not logged into your Humble Bundle Account through the Internet Explorer.`nYou can log-in manually or use the *login switch in links.txt (more info in readme file).`n";
+			} else {
+				$bundleTitle += "`n`nYou are currently logged into Humble Bundle Account '" + $loginAccount + "'`n(through the Internet Explorer) not linked to this bundle.`nYou can log-in manually or use the *login switch in links.txt (more info in readme file).`n" 
+			}
+		}
 		
 		write-host ==============================================================
 		write-host $currentDownload "/" $downloadCount - $bundleTitle
@@ -197,6 +219,7 @@ Get-Content $links | Foreach-Object {
 		$downLinkList = New-Object System.Collections.ArrayList
 		$curLabelList = New-Object System.Collections.ArrayList
 		$md5List = New-Object System.Collections.ArrayList
+		$publisherList = New-Object System.Collections.ArrayList
 		
 		### link collection section
 		
@@ -207,8 +230,10 @@ Get-Content $links | Foreach-Object {
 			$humbleTitle = $humbleName -replace '[^a-zA-Z0-9/_/''/\-/ ]', '_'
 			$humbleTitle = $humbleTitle -replace '/', '_'
 			$humbleTitle = $humbleTitle.trim()
+			$humblePublisher = $curTitle.getElementsByClassName("subtitle")[0].getElementsByTagName("a")[0].innerText
 			
 			$titleList.Add($humbleTitle) > $null
+			$publisherList.Add($humblePublisher) > $null
 			
 			$downAlready = -1
 			if ($curTitle.getElementsByClassName("download-buttons")[0].innerHTML.length -gt "0") {
@@ -314,8 +339,8 @@ Get-Content $links | Foreach-Object {
 							}
 							
 							echo "$curLabel - $downTitle" | Out-File $logAll -append
-							echo " - OK - File integrity `(MD5`) verified." | Out-File $logAll -append
-							echo " - MD5`: $curMD5" | Out-File $logAll -append
+							echo "   OK - File integrity `(MD5`) verified." | Out-File $logAll -append
+							echo "   MD5`: $curMD5" | Out-File $logAll -append
 						} else {
 							if ($md5fd -eq "none") { $notFoundErrors++; $errorReason = "Unsuccessful download (file not found)." } else { $errorReason = "File integrity `(MD5`) failed." }
 							$md5Errors++
@@ -375,6 +400,7 @@ Get-Content $links | Foreach-Object {
 							}
 							
 							echo "$curLabel - $downTitle" | Out-File $logAll -append
+							echo "   File downloaded already, skipping..." | Out-File $logAll -append
 							echo "   OK - File integrity `(MD5`) verified." | Out-File $logAll -append
 							echo "   MD5`: $curMD5" | Out-File $logAll -append
 						} else {
@@ -404,11 +430,13 @@ Get-Content $links | Foreach-Object {
 							if ($titleErrorLog -eq 0) { echo "`n$chunkNumber / $chunkLength - $humbleTitle" | Out-File $logError -append; $titleErrorLog = 1 }
 							
 							echo "$curLabel - $downTitle" | Out-File $logAll -append
+							echo "   File downloaded already, skipping..." | Out-File $logAll -append
 							echo "   FAIL - $errorReason" | Out-File $logAll -append
 							echo "   File MD5`: $md5fd" | Out-File $logAll -append
 							echo "   HB   MD5`: $curMD5" | Out-File $logAll -append
 							
 							echo "$curLabel - $downTitle" | Out-File $logError -append
+							echo "   File downloaded already, skipping..." | Out-File $logError -append
 							echo "   FAIL - $errorReason" | Out-File $logError -append
 							echo "   File MD5`: $md5fd" | Out-File $logError -append
 							echo "   HB   MD5`: $curMD5" | Out-File $logError -append
@@ -455,9 +483,39 @@ Get-Content $links | Foreach-Object {
 				"md5-" {$md5Switch = 0; break}
 				"md5s-" {$md5sSwitch = 0; break}
 				"md5s+" {$md5sSwitch = 1; break}
+				"genlist" {$genListSwitch = 1; break} # not in use
 			}
 			}
 		}
+		if ($_.indexOf("*") -eq "0") {
+			$loginfork = $_.split("*")[1].split(",")
+			for ($i = 0; $i -lt $loginfork.length; $i++) {
+			switch ($loginfork[$i].toLower().trim()) {
+				"login" {$loginSwitch = 1; break}
+				"login_pause" {$loginSwitch = 2; break}
+			}
+			}
+		}
+	}
+	if ($loginSwitch -gt "0") {
+		$loginAccount = "none"
+		$ie = new-object -ComObject "InternetExplorer.Application"
+		$ie.visible = $true
+		$ie.navigate("https://www.humblebundle.com/login?hmb_source=navbar&goto=%2F")
+		while ($loginAccount -eq "none" -and $ie.name.length -ne "0") {
+		while($ie.Busy -or $ie.ReadyState -ne "4") { Start-Sleep -Milliseconds 100 }
+			$allScripts = $ie.Document.getElementsByTagName("script")
+			for ($i = 0; $i -lt $allScripts.length; $i++) {
+				if ($allScripts[$i].src.length -eq 0 -and $allScripts[$i].text.IndexOf("window.models.user_json") -ne -1) {
+					$loginCheck = $allScripts[$i].text.substring($allScripts[$i].text.indexOf("window.models.user_json")).split("`n")[0].replace(" ","");
+					if ($loginCheck -ne "window.models.user_json={};") {$loginInfoJSON = $loginCheck.substring($loginCheck.indexOf("={")+1,$loginCheck.length-$loginCheck.indexOf("={")-2); $loginAccount = ($loginInfoJSON | ConvertFrom-Json).email} else {$loginAccount = "none"}
+				break;
+				}
+			}
+			Start-Sleep -Seconds 2
+		}
+		if ($loginSwitch -eq "2") {pause}
+		$loginSwitch = 0
 	}
 }
 $host.ui.RawUI.WindowTitle = "D: " + $currentDownload + "/" + $downloadCount +" `| Finished"
