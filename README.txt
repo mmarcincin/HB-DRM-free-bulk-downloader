@@ -2,18 +2,20 @@
 https://github.com/mmarcincin/HB-DRM-free-bulk-downloader/archive/master.zip
 ----------------------
 It's a powershell script which allows you to download DRM-Free content (e-books, games, music, etc) from Humble Bundle pages (https://www.humblebundle.com/downloads?key=XXXXXXXXXXXXXXXX) in bulk.
-It works natively for Windows 8+, Windows 7 required downloading the Powershell 3+, link below.
-It uses Internet Explorer instance to retrieve the links so all you need to do is login to Humble Hundle through the Internet Explorer and that's it.
+- works natively for Windows 8+, Windows 7 required downloading the Powershell 3+, link below.
+- uses Humble Bundle API to access your downloads using '_simpleauth_sess' cookie (no Internet Explorer required anymore)
 
 To install newer Powershell on Windows 7, visit this link: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-windows-powershell?view=powershell-6
 
 ----------------------
-HB DRM-Free bulk downloader 0.3.7
+HB DRM-Free bulk downloader 0.4.0
 ----------------------
 Bundle files are downloaded sequentially and saved in folder structure as shown in this example: downloads\bundleName\bookName\specificBookFile.extension
 
 latest additions:
-- script opens Internet Explorer window for you to log-in (more info below)
+- uses Humble Bundle API to access your downloads using '_simpleauth_sess' cookie (no Internet Explorer required anymore)
+- added option to download bittorent files instead of actual files
+- added options to reduce file path length - more info below in switches section (path length switches)
 
 All switches below modify the behaviour until modified again.
 Both switches and links are entered in the links.txt file which will open once you launch RUN.bat.
@@ -21,10 +23,33 @@ If you want to make shortcut for the script, create shortcut for the RUN.bat.
 
 Example of links.txt:
 ```
+^simpleauth_sess cookie
 #pdf
 https://www.humblebundle.com/downloads?key=XXXXXXXXXXXXXXXX
 ```
 
+_simpleauth_sess cookie
+----------------------
+a) developer console option
+1. navigate to humblebundle.com in your browser, open developer console using shift+i/shift+c
+2. at the top you can see tabs like Elements, Console, ... open application tab (if not visible click on >>)
+3. select cookies and then humblebundle.com, filter cookies by '_simpleauth_sess'
+4. click on it and copy Cookie Value shown below into links.txt (best entered as first line) in format: ^text
+
+b) browser settings option
+1. a) easy steps - Copy this link into browser:
+- For Opera: opera://settings/cookies/detail?site=humblebundle.com
+- For Google Chrome: chrome://settings/cookies/detail?site=humblebundle.com
+
+1. b) detailed steps
+- open settings in your browser, for Opera go to Settings (alt+p), for Google Chrome click on 3 vertical dots in top right corner > go to Settings
+- for Opera and Google Chrome: Enter 'cookies' into search settings field > Cookies and other site data > See all cookies and site data. > Enter 'humblebundle' into Search cookies field, choose humblebundle.com
+2. Find '_simpleauth_sess' cookie and copy the cookie text in field Content into links.txt (best entered as first line) in format: ^text
+
+You can have multiple '_simpleauth_sess' cookie text strings (if you need to download the DRM-Free files from some other humble bundle account) in your links.txt file.
+
+Switches
+----------------------
 To specify your preferred label/extension/format for link only, use:
 - https://www.humblebundle.com/downloads?key=XXXXXXXXXXXXXXXX#pdf
 - https://www.humblebundle.com/downloads?key=XXXXXXXXXXXXXXXX#pdf,epub,mp3
@@ -39,8 +64,7 @@ for global preferred label use:
 - if some book/game/audio doesn't have preferred label, it'll download first label (unless overridden by %strict)
 
 platform global switches:
-- @default (needed only when you want to reset it back, for exmaple from mac back to default for next set of links)
-- @windows (usually selected by default; if you really want to reset it use @default instead)
+- @windows (default)
 - @mac
 - @linux
 - all of them works but it has to be the exact wording (e.g. @android)
@@ -57,40 +81,55 @@ log files:
 - LOG-error.txt -- log of errors only (md5 fails and unsuccessful downloads)
 - if you use !md5-, LOG-all.txt and LOG-error.txt will contain only unsuccessful downloads
 
-other global switches:
+preference global switches:
 - %normal (default, this will return to downloading at least 1 label)
 - %strict (this will download only your preferred label)
 
-another set of global switches:
 - %pref (default, download first found preferred label in list and skip others)
 - %all (download all preferred labels)
 
-They can be used together in one line:
+Switches #,%,!,~ support multiple parameters in one line:
 - %strict,pref (this would download only 1 specified label and skip others, even those without the pref label)
 
-only # and % switches supports multiple parameters
+direct download switches:
+- *direct - downloads file itself
+- *bittorrent - downloads bittorent file
 
-login global switches:
-- *login - opens Internet Explorer instance for you to log-in to you Humble Bundle Account, once you're logged-in, the download starts automatically
-- *login_pause - opens Internet Explorer instance for you to log-in to you Humble Bundle Account, once you're logged-in, you need to press enter to continue. Useful when you need to switch to different Humble Bundle account
-- in both cases Internet Explorer instance for logging-in is not closed by itself (intentional, might change in the future) so that the user have control over the window
-- if links.txt is empty, it applies *login switch by default at the start
+path length switches:
+- ~fullbundle (default, fully qualified bundle name)
+- ~keybundle (bundle name is represented by key value from purchase link)
+- ~if_title-60_file-30 (conditional filename shortening: if title length is longer than 60, shorten filename length including extension to 30; values can be modified)
+- ~if_title-0_file-0 (to disable conditional file shortnening if you enabled it earlier in links.txt)
+- they can be used in one line as well like: ~keybundle, if_title-60_file-30
+- example:
+	- bundle title: Humble Book Bundle_ Cybersecurity presented by Wiley
+	- ebook title: Practical Reverse Engineering_ x86_ x64_ ARM_ Windows Kernel_ Reversing Tools_ and Obfuscation
+	- filename: practical_reverse_engineering_x86_x64_arm_windows_kernel_reversing_tools_and_obfuscation.pdf
+	- these 3 alone make the file path length of 240 extra 44 if you add default script folder structure (HB-DRM-Free-bulk-downloader-master\downloads)
+	- using ~keybundle switch the bundle title will have length of 16 (vs 52) which saves you 36 characters, in addition using ~IF_title-60_file-30 you'll get filename with length of 30 (vs 92) which saves you another 62 characters for a total of 98 characters total
+	- the end result structure would look like this: XXXXXXXXXXXXXXXX\Practical Reverse Engineering_ x86_ x64_ ARM_ Windows Kernel_ Reversing Tools_ and Obfuscation\practical_reverse_engineer.pdf
+	
+255+ file paths issues
+----------------------
+If you still have troubles with long file paths, considering moving downloader up in the folder structure or try using subst for your folder.
+- You can find more info using links below:
+- https://support.code42.com/Incydr/Agent/Troubleshooting/Windows_file_paths_longer_than_255_characters
+- https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#enable-long-paths-in-windows-10-version-1607-and-later
 
 Downloads are permanently stored after each book/download versions are retrieved.
-If you interrupt it then partially downloaded books will be removed.
-Next time you start this script, it'll continue where you left (the next book/download) if you kept the downloaded books in downloads folder.
+If you interrupt it then your partially downloaded book/download will be removed.
+Next time you start this script, it'll continue where you left (the next book/download) if you kept the downloaded books/downloads in downloads folder.
 
 To better track the download progress without minimizing your active window, you can go to Taskbar settings: Combine Taskbar buttons > 'When Taskbar is full'. 
-Then you'll be able to see the download progress shown in the window title of your taskbar.
+Then you'll be able to see the download progress shown in the window title on your taskbar.
 
 Powershell ExecutionPolicy change
 ----------------------
 start RUN.bat to launch the script
-for editing the script itself open HB-books_download.ps1 in notepad (or notepad++,etc...)
+for editing the script itself open HB-DRM-Free_download.ps1 in notepad (or notepad++, etc...)
 
 If the window closes fast after starting RUN.bat, follow these steps: 
-1. Go to any folder (file explorer) and choose file > open windows powershell > 
-   > open windows powershell as administrator.
+1. Go to any folder (file explorer) and choose file > open windows powershell > open windows powershell as administrator.
 2. In the Windows PowerShell window type: get-ExecutionPolicy.
 3. If you are geting the 'Restricted' text, type: set-ExecutionPolicy RemoteSigned,
    then just confirm with y for yes.
@@ -98,47 +137,10 @@ If the window closes fast after starting RUN.bat, follow these steps:
 
 If you'd like to create a shortcut for the script, you just need to make shortcut of RUN.bat file.
 
-Possible Errors - download stuck at the beginning
-----------------------
-If your bundle haven't started downloading already for 10+ sec and you were redirected here then open your Internet Explorer and go to https://www.humblebundle.com/.
-Try to click on the dropdown menu button in top right corner, it doesn't respond most likely. You also can't see any bundles on the front page.
-
-To make it work, follow these steps:
-1. Open Internet Explorer, press alt (the toolbar will show up), go to Tools > Internet Options > Security Tab(at the top) > Trusted sites
-   - move the vertical bar to the bottom (Low option)
-   - click on Sites button and add 'https://www.humblebundle.com/' into the list (otherwise the site would load only partially)
-2. Enable Protected Mode for Trusted sites (ReadyState was blank when this was disabled so script was stuck).
-3. It's possible you'll get logged out of Humble Bundle after changing to Protected Mode so just login there again.
-
-My script loads IE instance only for links and once the download starts, the IE instance should be already closed.
-If you saw the PowerShell message to check this error, the IE instance is already closed as well.
-
-Killing Internet Explorer instances might help if you encountered problems before it started working. 
-
-The fastest way to do it is to run this 'stop process' command in PowerShell: 
-get-process iexplore.exe | stop-process
-
-You can check afterwards with 'get-process iexplore.exe', if you've got an error it means the IE doesn't have any windows opened. If you still have the iexplore.exe there it means you have to launch Powershell as administrator (option in File menu in your File Explorer) and run the same 'stop process' command again.
-
-Possible Errors - 'Humble Bundle - Key already claimed'
-----------------------
-If you're getting 'Humble Bundle - Key already claimed' instead of bundle title when you run the script, it means you're not logged into your Humble Bundle account (which owns the bundle) in the Internet Explorer.
-
-Possible Errors - 'Exception from HRESULT: 0x800A01B6'
-----------------------
-If you're getting 'Exception from HRESULT: 0x800A01B6' error, try launching RUN.bat as administrator.
-You could also follow steps in 'Possible Errors - download stuck at the beginning' above.
-
 Possible Errors - unremovable folder with leading/trailing space
 ----------------------
+There were bundles which had space at the end of their name, before version 0.3.5 it didn't remove those spaces which could cause problems mentioned below.
+
 If my script created folder with space (" ") in name and you can't remove it now, you could try this to fix it:
 quote by JustSolvedIt from https://superuser.com/questions/565334/rename-delete-windows-x64-folder-with-leading-and-trailing-space/911994#911994
 > I just had a similar problem with folder "Monuments - Discography " created in linux. Windows Vista and Windows 7 couldn't recognize this folder as a valid data and when I tried to rename or remove it I got Info message saying that folder does not exist etc. The solution was to explore a dir with 7zip file manager and rename the folder by removing a white space from the end. Simple. Now I can enjoy the music once again :D
-
-Possible Errors - missing Internet Explorer
-----------------------
-1. Launch Run (Win+R), type control, press enter. This will open Control Panel.
-2. Open Programs Section
-3. Programs and Features -> subsection - View installed updates
-4. Left sidebar - Turn Windows features on or off
-5. Select Internet Explorer (if unselected) and click ok.

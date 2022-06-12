@@ -1,5 +1,5 @@
 #Requires -Version 3.0
-### HB DRM-Free bulk downloader 0.3.7 by https://github.com/mmarcincin
+### HB DRM-Free bulk downloader 0.4.0 by https://github.com/mmarcincin
 #$links = "links.txt"
 $invocation = (Get-Variable MyInvocation).Value
 $DownloadDirectory = Split-Path $invocation.MyCommand.Path
@@ -13,20 +13,27 @@ $DownloadDirectory = "$($DownloadDirectory)\downloads"
 $temp = "$DownloadDirectory\temp"
 
 ### default behavior ###
+#default _simpleauth_sess cookie text
+$authSessCookie = "none"
 #0 means if preferred label is set and not found at specific book/game, it'll download first label/extension in the list, 1 means pref labels only
 $strictSwitch = 0
 #1 means it'll download the first labels/extension found in the list, 0 means it'll download all labels/extensions in the list
 $prefSwitch = 1
 #default Operating System
-$osSwitch = "default"
+$osSwitch = "windows"
 #md5 hash check of files enabled
 $md5Switch = 1
 #md5 hash check of previously stored/downloaded files enabled
 $md5sSwitch = 1
+#1 downloads the file itself, 0 is for bittorent file
+$directDownloadSwitch = 1
+#0 means the downloads will save to fully qualified name for bundles, 1 means bundle name is represented by key value from purchase link
+$saveForkBundleSwitch = 0
+#if $fileLimitLengthCheck is 0 conditional filename shortening is disabled
+$folderTitleLengthCheck = 0
+$fileLimitLengthCheck = 0
 #not implemented - for future use
 $genListSwitch = 0
-#if 1 opens visible Internet Explorer window to login
-$loginSwitch = 0
 ###
 
 $bundleLog = 0
@@ -36,7 +43,7 @@ $titleErrorLog = 0
 $md5Errors = 0
 $notFoundErrors = 0
 
-write-host HB DRM-Free bulk downloader 0.3.7 by https://github.com/mmarcincin
+write-host HB DRM-Free bulk downloader 0.4.0 by https://github.com/mmarcincin
 write-host `nDownload directory`: $DownloadDirectory`n
 
 $ConCountr1 = 0
@@ -124,7 +131,6 @@ Get-Content $links | Foreach-Object {
 		$currentDownload++
 		$host.ui.RawUI.WindowTitle = "D: " + $currentDownload + "/" + $downloadCount
 		
-		$ie = new-object -ComObject "InternetExplorer.Application"
 		$requestUri = $_.trim()
 		
 		$requestLink = $requestUri.split("#")[0]
@@ -138,52 +144,66 @@ Get-Content $links | Foreach-Object {
 		write-host OS: $osSwitch
 		if ($md5Switch -eq "1") { write-host MD5 file check: enabled } else { if ($md5Switch -eq "0") { write-host MD5 file check: disabled }}
 		if ($md5Switch -eq "1") { if ($md5sSwitch -eq "1") { write-host MD5 stored file check: enabled } else { if ($md5sSwitch -eq "0") { write-host MD5 stored file check: disabled }}}
-
-		#$ie.visible = $true
-		$ie.silent = $true
-		$ie.navigate($requestLink)
-		#while($ie.Busy) { Start-Sleep -Milliseconds 100 }
-		while($ie.Busy -or $ie.ReadyState -ne "4") { Start-Sleep -Milliseconds 100 }
+		if ($directDownloadSwitch -eq "1") { write-host download method: direct } else { write-host download method: bittorent file }
+		if ($saveForkBundleSwitch -eq "0") { write-host bundle name folder: full name } else { write-host bundle name folder: key value from purchase link }
+		if ($fileLimitLengthCheck -eq "0") { write-host "conditional filename shortening: disabled" } else { write-host "conditional filename shortening:`nif title length is longer than $folderTitleLengthCheck, shorten filename length including extension to $fileLimitLengthCheck" }
 		
-		$drmCheckCounter = 0
-		while (($ie.Document.getElementsByClassName("whitebox-redux").length -eq "0") -or ($ie.Document.getElementsByClassName("whitebox-redux")[0].innerText.length -eq "0") -or ($ie.Document.getElementsByClassName("icn").length -eq "0") -or ($ie.Document.getElementsByClassName("icn")[0].innerText.length -eq "0")) { 
-			Start-Sleep -Milliseconds 100
-			$drmCheckCounter += 1
-			if (($ie.Document.getElementsByClassName("page_title")[0].getElementsByTagName("h1").length -gt 0) -and ($ie.Document.getElementsByClassName("page_title")[0].getElementsByTagName("h1")[0].innerHTML.toLower() -eq "this page is claimed")) { break; }
-			if ($drmCheckCounter -ge 100) {
-				if ($ie.Document.getElementsByClassName("mosaic-view").length -eq "0") { $ie.quit(); write-host "`nBundle information is not visible.`nCheck README file for 'Possible Errors - download stuck at the beginning'.`n"; pause; Exit;}
-				write-host "`nNo DRM-Free content detected for this bundle (10 seconds waiting time).`n"
-				break;
-			}
-		}
-		Start-Sleep -Seconds 1
+		#Start-Sleep -Seconds 1
 		#pause
-		$doc = $ie.Document
-		if (($doc.getElementsByTagName("title").length -gt 0) -and ($doc.getElementsByTagName("title")[0].innerHTML.trim().length -gt 0)) {
-			$docTitle = $doc.getElementsByTagName("title")[0].innerText.trim()
-		} else {	
-			$docTitle = $doc.getElementById("hibtext").innerHTML.split(">")[1].split("<")[0].trim()
-		}
-		if ($docTitle.lastIndexOf("(") -eq -1) {$bundleName = $docTitle;} else {$bundleName = $docTitle.substring(0, $docTitle.lastIndexOf("(") - 1)}
-		$bundleName = [Text.Encoding]::ASCII.GetString([Text.Encoding]::GetEncoding("Cyrillic").GetBytes($bundleName))
-		$bundleTitle = $bundleName -replace '[^a-zA-Z0-9/_/''/\-/ ]', '_'
-		$bundleTitle = $bundleTitle -replace '/', '_'
-		$bundleTitle = $bundleTitle.trim()
 		
-		$allScripts = $ie.Document.getElementsByTagName("script")
-		for ($i = 0; $i -lt $allScripts.length; $i++) {
-			if ($allScripts[$i].src.length -eq 0 -and $allScripts[$i].text.IndexOf("window.models.user_json") -ne -1) {
-				$loginCheck = $allScripts[$i].text.substring($allScripts[$i].text.indexOf("window.models.user_json")).split("`n")[0].replace(" ","");
-				if ($loginCheck -ne "window.models.user_json={};") {$loginInfoJSON = $loginCheck.substring($loginCheck.indexOf("={")+1,$loginCheck.length-$loginCheck.indexOf("={")-2); $loginAccount = ($loginInfoJSON | ConvertFrom-Json).email} else {$loginAccount = "none"}
-			break;
+		$bundleInfoLink = "https://www.humblebundle.com/api/v1/order/" + $requestLink.substring($requestLink.indexOf("?key=") + 5)
+		
+		[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+		$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession    
+		$cookie = New-Object System.Net.Cookie 
+    
+		$cookie.Name = "_simpleauth_sess"
+		$cookie.Value = $authSessCookie
+		$cookie.Domain = "humblebundle.com"
+		
+		$session.Cookies.Add($cookie);
+
+		try
+		{
+			$bundleInfo = Invoke-WebRequest $bundleInfoLink -WebSession $session -TimeoutSec 900
+			# This will only execute if the Invoke-WebRequest is successful.
+			$statusCode = $bundleInfo.StatusCode
+		}
+		catch
+		{
+			$statusCode = $_.Exception.Response.StatusCode.value__
+		}
+		#$statusCode
+		
+		if ($statusCode -eq 200) {
+			$bundleInfoJson = $bundleInfo | ConvertFrom-Json
+			if ($saveForkBundleSwitch -eq 0) {
+				$bundleName = $bundleInfoJson.product.human_name 
+				$bundleName = [Text.Encoding]::ASCII.GetString([Text.Encoding]::GetEncoding("Cyrillic").GetBytes($bundleName))
+				$bundleTitle = $bundleName -replace '[^a-zA-Z0-9/_/''/\-/ ]', '_'
+				$bundleTitle = $bundleTitle -replace '/', '_'
+			} else {
+				$bundleTitle = $bundleInfoJson.gamekey
+			}
+			$bundleTitle = $bundleTitle.trim()
+		} else {
+			$bundleInfo = ""
+			$bundleInfoJson = ""
+			if ($statusCode -eq 401) {
+				$bundleTitle = "You are currently using no '_simpleauth_sess' cookie or the purchase link is not associated with your account."
+			} else {
+				if ($statusCode -eq 404) {
+				$bundleTitle = "Humble Bundle purchase link you provided is not valid, check for copy/typing errors."
+				}
 			}
 		}
-		#loginAccount none if not logged in, email if logged
-		if ($bundleTitle -eq "Humble Bundle - Key already claimed") {
-			if ($loginAccount -eq "none") {
-				$bundleTitle += "`n`nYou are currently not logged into your Humble Bundle Account through the Internet Explorer.`nYou can log-in manually or use the *login switch in links.txt (more info in readme file).`n";
-			} else {
-				$bundleTitle += "`n`nYou are currently logged into Humble Bundle Account '" + $loginAccount + "'`n(through the Internet Explorer) not linked to this bundle.`nYou can log-in manually or use the *login switch in links.txt (more info in readme file).`n" 
+		
+		$hiddenDRMFreeEntries = 0
+		if ($bundleInfoJson.subproducts.length -gt 0) {
+			for ($i = 0; $i -lt $bundleInfoJson.subproducts.length; $i++) {
+				if ($bundleInfoJson.subproducts[$i].library_family_name -eq "hidden") {
+					$hiddenDRMFreeEntries++
+				}
 			}
 		}
 		
@@ -194,23 +214,22 @@ Get-Content $links | Foreach-Object {
 		$bundleLog = 0
 		$bundleErrorLog = 0
 
-		if ($osSwitch -ne "default") {
-			if ($doc.getElementsByClassName("dlplatform-list").length -gt 0) {
-				$platforms = $doc.getElementsByClassName("dlplatform-list")
-				for ($i = 0; $i -lt $platforms.length; $i++) {
-					$platform = $platforms[$i].getElementsByClassName("label")
-					for ($j = 0; $j -lt $platform.length; $j++) {
-						if ($platform[$j].innerHTML.toLower() -eq $osSwitch) { 
-							$platform[$j].click()
-							if ($doc.getElementsByClassName("dlplatform-list")[$i].getElementsByClassName("label")[$j].parentNode.className.indexOf("active") -eq "-1") { $failedOSSwitch = 1 }
-							Start-Sleep -Seconds 1
-						}
-					}
-				}
-			}
+		if (($statusCode -eq 200) -and (($bundleInfoJson.subproducts.length -eq 0) -or ($hiddenDRMFreeEntries -eq $bundleInfoJson.subproducts.length))) {
+			write-host "`nNo DRM-Free content detected for this bundle.`n"
 		}
-		if ($failedOSSwitch -eq 1) {
-			write-host Failed to switch OS platform
+		if ($statusCode -eq 401) {
+			write-host "`nIn order to access your DRM-free files you have to save '_simpleauth_sess' cookie from your browser."
+			write-host "a) developer console option"
+			write-host "1. navigate to humblebundle.com in your browser, open developer console using shift+i/shift+c"
+			write-host "2. at the top you can see tabs like Elements, Console, ... open application tab (if not visible click on >>)"
+			write-host "3. select cookies and then humblebundle.com, filter cookies by '_simpleauth_sess'"
+			write-host "4. click on it and copy Cookie Value shown below into links.txt (best entered as first line) in format: ^text`n"
+			write-host "b) browser settings option"
+			write-host "1. Copy this link into browser:"
+			write-host "  For Opera: opera://settings/cookies/detail?site=humblebundle.com"
+			write-host "  For Google Chrome: chrome://settings/cookies/detail?site=humblebundle.com"
+			write-host "2. Find _simpleauth_sess cookie and copy the cookie text in field Content into links.txt (best entered as first line) in format: ^text"
+			write-host "If you'd like to navigate to cookies yourself, check out README file.`n"
 			pause
 		}
 
@@ -222,37 +241,43 @@ Get-Content $links | Foreach-Object {
 		$publisherList = New-Object System.Collections.ArrayList
 		
 		### link collection section
-		
-		$hb = $doc.getElementsByClassName("icn")
+		$hb = $bundleInfoJson.subproducts
 		for ($i = 0; $i -lt $hb.length; $i++) {
-			$curTitle = $hb[$i].parentNode
-			$humbleName = [Text.Encoding]::ASCII.GetString([Text.Encoding]::GetEncoding("Cyrillic").GetBytes($curTitle.getAttribute("data-human-name")))
+			if (($hb[$i].downloads.platform -eq $osSwitch) -or ($hb[$i].downloads.platform -eq "audio") -or ($hb[$i].downloads.platform -eq "ebook")) {
+			$curTitle = $hb[$i]
+			$humbleName = [Text.Encoding]::ASCII.GetString([Text.Encoding]::GetEncoding("Cyrillic").GetBytes($curTitle.human_name))
 			$humbleTitle = $humbleName -replace '[^a-zA-Z0-9/_/''/\-/ ]', '_'
 			$humbleTitle = $humbleTitle -replace '/', '_'
 			$humbleTitle = $humbleTitle.trim()
-			$humblePublisher = $curTitle.getElementsByClassName("subtitle")[0].getElementsByTagName("a")[0].innerText
+			#$humblePublisher = $curTitle.getElementsByClassName("subtitle")[0].getElementsByTagName("a")[0].innerText
 			
 			$titleList.Add($humbleTitle) > $null
-			$publisherList.Add($humblePublisher) > $null
+			#$publisherList.Add($humblePublisher) > $null
 			
 			$downAlready = -1
-			if ($curTitle.getElementsByClassName("download-buttons")[0].innerHTML.length -gt "0") {
-				$downLabels = $curTitle.getElementsByClassName("download-buttons")[0].getElementsByClassName("label")
+
+			if ($curTitle.downloads.download_struct.length -gt "0") {
+				$downLabels = $curTitle.downloads.download_struct
 				for ($j = 0; $j -lt $prefLabels.length; $j++) {
 					for ($k = $downLabels.length-1; $k -ge 0; $k--) {
 						if (($downAlready -eq "1") -and ($prefSwitch -eq "1") -and ($prefLabels[0].ToLower().trim() -ne "none")) { break; }
-						$curLabel = $downLabels[$k].innerHTML
+						$curLabel = $downLabels[$k].name
 						if (($curLabel.ToLower() -eq $prefLabels[$j].ToLower().trim()) -or ($prefLabels[0].ToLower().trim() -eq "none")) {
 							$downAlready = 1
 							
-							$downLink = $downLabels[$k].parentNode.getElementsByClassName("a")[0].href
-							$md5c = $downLabels[$k].parentNode.parentNode.getElementsByClassName("dlmd5")[0]
-							$md5c.click()
-							#Start-Sleep -Seconds 1
-							$md5c = $downLabels[$k].parentNode.parentNode.getElementsByClassName("dlmd5")[0]
-							$md5ct = $md5c.innerText.trim()
+							if ($directDownloadSwitch -eq 1) {$downLink = $downLabels[$k].url.web} else {$downLink = $downLabels[$k].url.bittorrent}
+							#$downLink = $downLabels[$k].url.web
+							$md5c = $downLabels[$k].md5
+							$md5ct = $md5c.trim()
 							$downName = $downLink.split("?")[0].split("/")
 							$downTitle = $downName[$downName.length-1].trim()
+							if (($fileLimitLengthCheck -gt 0) -and ($folderTitleLengthCheck -ge 0) -and ($humbleTitle.length -gt $folderTitleLengthCheck)) {
+								$downTitleExt = $downTitle.substring($downTitle.lastIndexOf("."))
+								$downTitle = $downTitle.substring(0, $downTitle.lastIndexOf("."))
+								if (($downTitle.length + $downTitleExt.length) -gt $fileLimitLengthCheck) {
+									$downTitle = $downTitle.substring(0, $fileLimitLengthCheck - $downTitleExt.length) + $downTitleExt
+								}
+							}
 							
 							$downTitleList.Add($downTitle) > $null
 							$downLinkList.Add($downLink) > $null
@@ -265,14 +290,19 @@ Get-Content $links | Foreach-Object {
 				### if preferred label is not found, it'll download the first label unless %strict global switch is applied
 			if (($downAlready -eq "-1") -and ($strictSwitch -eq "0")) {
 				#write-host `-`- Preferred label not found`, downloading first label `-`-
-				$curLabel = $downLabels[$downLabels.length-1].innerHTML
-				$downLink = $downLabels[$downLabels.length-1].parentNode.getElementsByClassName("a")[0].href
-				$md5c = $downLabels[$downLabels.length-1].parentNode.parentNode.getElementsByClassName("dlmd5")[0]
-				$md5c.click()
-				$md5c = $downLabels[$downLabels.length-1].parentNode.parentNode.getElementsByClassName("dlmd5")[0]
-				$md5ct = $md5c.innerText.trim()
+				$curLabel = $downLabels[$downLabels.length-1].name
+				if ($directDownloadSwitch -eq 1) { $downLink = $downLabels[$downLabels.length-1].url.web } else { $downLink = $downLabels[$downLabels.length-1].url.bittorrent }
+				$md5c = $downLabels[$downLabels.length-1].md5
+				$md5ct = $md5c.trim()
 				$downName = $downLink.split("?")[0].split("/")
 				$downTitle = $downName[$downName.length-1].trim()
+				if (($fileLimitLengthCheck -gt 0) -and ($folderTitleLengthCheck -gt 0) -and ($humbleTitle.length -gt $folderTitleLengthCheck)) {
+					$downTitleExt = $downTitle.substring($downTitle.lastIndexOf("."))
+					$downTitle = $downTitle.substring(0, $downTitle.lastIndexOf("."))
+					if (($downTitle.length + $downTitleExt.length) -gt $fileLimitLengthCheck) {
+						$downTitle = $downTitle.substring(0, $fileLimitLengthCheck - $downTitleExt.length) + $downTitleExt
+					}
+				}
 				
 				$downTitleList.Add($downTitle) > $null
 				$downLinkList.Add($downLink) > $null
@@ -286,9 +316,8 @@ Get-Content $links | Foreach-Object {
 			$md5List.Add($i) > $null
 			}
 		}
+		}
 		#$downTitleList
-		#pause
-		$ie.quit()
 		#pause
 		### download section
 		$downIndex = 0
@@ -319,7 +348,7 @@ Get-Content $links | Foreach-Object {
 					If (!(Test-Path $temp\$bundleTitle\$humbleTitle)){ New-Item -ItemType directory -Path $temp\$bundleTitle\$humbleTitle | Out-Null }
 					downFile $downLink $downDest
 					### md5 check and output to LOG files
-					if ($md5Switch -eq 1 -or !(Test-Path $downDest)) {
+					if (($md5Switch -eq 1 -or !(Test-Path $downDest)) -and $directDownloadSwitch -eq 1) {
 						$md5f = md5hash("$downDest")
 						$md5fd = $md5f.ToLower().replace("-", "")
 						if ($md5fd -eq $curMD5) {
@@ -380,7 +409,7 @@ Get-Content $links | Foreach-Object {
 					}
 				} else {
 					write-host "   "File downloaded already, skipping...
-					if ($md5Switch -eq 1 -and $md5sSwitch -eq 1) {
+					if ($md5Switch -eq 1 -and $md5sSwitch -eq 1 -and $directDownloadSwitch -eq 1) {
 						$md5f = md5hash("$DownloadDirectory\$bundleTitle\$humbleTitle\$downTitle")
 						$md5fd = $md5f.ToLower().replace("-", "")
 						if ($md5fd -eq $curMD5) {
@@ -488,34 +517,31 @@ Get-Content $links | Foreach-Object {
 			}
 		}
 		if ($_.indexOf("*") -eq "0") {
-			$loginfork = $_.split("*")[1].split(",")
-			for ($i = 0; $i -lt $loginfork.length; $i++) {
-			switch ($loginfork[$i].toLower().trim()) {
-				"login" {$loginSwitch = 1; break}
-				"login_pause" {$loginSwitch = 2; break}
+			$directDown = $_.split("*")[1].split(",")
+			for ($i = 0; $i -lt $directDown.length; $i++) {
+			switch ($directDown[$i].toLower().trim()) {
+				"direct" {$directDownloadSwitch = 1; break}
+				"bittorrent" {$directDownloadSwitch = 0; break}
 			}
 			}
 		}
-	}
-	if ($loginSwitch -gt "0") {
-		$loginAccount = "none"
-		$ie = new-object -ComObject "InternetExplorer.Application"
-		$ie.visible = $true
-		$ie.navigate("https://www.humblebundle.com/login?hmb_source=navbar&goto=%2F")
-		while ($loginAccount -eq "none" -and $ie.name.length -ne "0") {
-		while($ie.Busy -or $ie.ReadyState -ne "4") { Start-Sleep -Milliseconds 100 }
-			$allScripts = $ie.Document.getElementsByTagName("script")
-			for ($i = 0; $i -lt $allScripts.length; $i++) {
-				if ($allScripts[$i].src.length -eq 0 -and $allScripts[$i].text.IndexOf("window.models.user_json") -ne -1) {
-					$loginCheck = $allScripts[$i].text.substring($allScripts[$i].text.indexOf("window.models.user_json")).split("`n")[0].replace(" ","");
-					if ($loginCheck -ne "window.models.user_json={};") {$loginInfoJSON = $loginCheck.substring($loginCheck.indexOf("={")+1,$loginCheck.length-$loginCheck.indexOf("={")-2); $loginAccount = ($loginInfoJSON | ConvertFrom-Json).email} else {$loginAccount = "none"}
-				break;
+		if ($_.indexOf("^") -eq "0") {
+			$authSessCookie = $_.split("^")[1].trim()
+		}
+		if ($_.indexOf("~") -eq "0") {
+			$saveFork = $_.split("~")[1].split(",")
+			for ($i = 0; $i -lt $saveFork.length; $i++) {
+				$saveFork[$i] = $saveFork[$i].toLower().trim()
+				if (($saveFork[$i].indexOf("if_title-") -eq 0) -and ($saveFork[$i].indexOf("_file-") -ne -1)) {
+					$folderTitleLengthCheck = $($saveFork[$i].split("_")[1].split("-")[1])/1
+					$fileLimitLengthCheck = $($saveFork[$i].split("_")[2].split("-")[1])/1
 				}
+			switch ($saveFork[$i]) {
+				"fullbundle" {$saveForkBundleSwitch = 0; break}
+				"keybundle" {$saveForkBundleSwitch = 1; break}
 			}
-			Start-Sleep -Seconds 2
+			}
 		}
-		if ($loginSwitch -eq "2") {pause}
-		$loginSwitch = 0
 	}
 }
 $host.ui.RawUI.WindowTitle = "D: " + $currentDownload + "/" + $downloadCount +" `| Finished"
