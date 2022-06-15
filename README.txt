@@ -1,18 +1,24 @@
 # HB DRM-Free bulk downloader
+Download link:
 https://github.com/mmarcincin/HB-DRM-free-bulk-downloader/archive/master.zip
 ----------------------
 It's a powershell script which allows you to download DRM-Free content (e-books, games, music, etc) from Humble Bundle pages (https://www.humblebundle.com/downloads?key=XXXXXXXXXXXXXXXX) in bulk.
-- works natively for Windows 8+, Windows 7 required downloading the Powershell 3+, link below.
+- works natively for Windows 8+, Windows 7 required downloading the Powershell 3+, link below
 - uses Humble Bundle API to access your downloads using '_simpleauth_sess' cookie (no Internet Explorer required anymore)
 
 To install newer Powershell on Windows 7, visit this link: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-windows-powershell?view=powershell-6
 
 ----------------------
-HB DRM-Free bulk downloader 0.4.0
+HB DRM-Free bulk downloader 0.4.1
 ----------------------
 Bundle files are downloaded sequentially and saved in folder structure as shown in this example: downloads\bundleName\bookName\specificBookFile.extension
 
 latest additions:
+- added sections: video and others to the default sections list to download (several software bundles use those)
+- added ability to override default, add, remove download platforms/sections
+- single label and bundles with sections android, linux, mac, video, others were not downloading correctly
+
+0.4.0 additions:
 - uses Humble Bundle API to access your downloads using '_simpleauth_sess' cookie (no Internet Explorer required anymore)
 - added option to download bittorent files instead of actual files
 - added options to reduce file path length - more info below in switches section (path length switches)
@@ -23,7 +29,7 @@ If you want to make shortcut for the script, create shortcut for the RUN.bat.
 
 Example of links.txt:
 ```
-^simpleauth_sess cookie
+^_simpleauth_sess cookie
 #pdf
 https://www.humblebundle.com/downloads?key=XXXXXXXXXXXXXXXX
 ```
@@ -63,11 +69,17 @@ for global preferred label use:
 - #none (default, this will return to downloading all versions)
 - if some book/game/audio doesn't have preferred label, it'll download first label (unless overridden by %strict)
 
-platform global switches:
-- @windows (default)
-- @mac
-- @linux
-- all of them works but it has to be the exact wording (e.g. @android)
+platform/section global switches:
+- default sections: @windows,audio,video,ebook,others
+- known sections: windows,linux,mac,android,audio,video,ebook,others
+- @linux,mac (override default sections and download only these sections (multiple options))
+- @+linux,mac (add mentioned sections to download sections in addition to default ones (multiple options))
+- @-windows,video (supress downloading mentioned sections (takes precedence over default and additional sections))
+- @+ (default, restore default sections)
+- @- (default, no supressed sections)
+- @all (disable section filtering)
+- @all- (default, enable section filtering if modified before in links.txt)
+- all of them works but it has to be the exact wording (e.g. @android, @+android, @-android)
 
 md5 global switches:
 - !md5+ (default, enable md5 file integrity check)
@@ -82,14 +94,14 @@ log files:
 - if you use !md5-, LOG-all.txt and LOG-error.txt will contain only unsuccessful downloads
 
 preference global switches:
-- %normal (default, this will return to downloading at least 1 label)
-- %strict (this will download only your preferred label)
+- %normal (default, return to downloading at least 1 label)
+- %strict (download only your preferred label)
 
 - %pref (default, download first found preferred label in list and skip others)
 - %all (download all preferred labels)
 
 Switches #,%,!,~ support multiple parameters in one line:
-- %strict,pref (this would download only 1 specified label and skip others, even those without the pref label)
+- %strict,pref (download only 1 specified label and skip others, even those without the pref label)
 
 direct download switches:
 - *direct - downloads file itself
@@ -99,8 +111,8 @@ path length switches:
 - ~fullbundle (default, fully qualified bundle name)
 - ~keybundle (bundle name is represented by key value from purchase link)
 - ~if_title-60_file-30 (conditional filename shortening: if title length is longer than 60, shorten filename length including extension to 30; values can be modified)
-- ~if_title-0_file-0 (to disable conditional file shortnening if you enabled it earlier in links.txt)
-- they can be used in one line as well like: ~keybundle, if_title-60_file-30
+- ~if_title-0_file-0 (default, to disable conditional file shortnening if you enabled it earlier in links.txt)
+- they can be used in one line as well like: ~keybundle,if_title-60_file-30
 - example:
 	- bundle title: Humble Book Bundle_ Cybersecurity presented by Wiley
 	- ebook title: Practical Reverse Engineering_ x86_ x64_ ARM_ Windows Kernel_ Reversing Tools_ and Obfuscation

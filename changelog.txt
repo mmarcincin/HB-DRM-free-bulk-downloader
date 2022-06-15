@@ -1,6 +1,13 @@
 # HB DRM-Free bulk downloader
 https://github.com/mmarcincin/HB-DRM-free-bulk-downloader/archive/master.zip
 ----------------------
+HB DRM-free bulk downloader 0.4.1
+----------------------
+- added sections: video and others to the default sections list to download (several software bundles use those)
+- added ability to override default, add, remove download platforms/sections
+- single label and bundles with sections android, linux, mac, video, others were not downloading correctly
+
+----------------------
 HB DRM-free bulk downloader 0.4.0
 ----------------------
 - uses Humble Bundle API to access your downloads using '_simpleauth_sess' cookie (no Internet Explorer required anymore)
