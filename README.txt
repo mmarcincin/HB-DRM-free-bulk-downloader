@@ -9,14 +9,12 @@ It's a powershell script which allows you to download DRM-Free content (e-books,
 To install newer Powershell on Windows 7, visit this link: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-windows-powershell?view=powershell-6
 
 ----------------------
-HB DRM-Free bulk downloader 0.4.1
+HB DRM-Free bulk downloader 0.4.2
 ----------------------
 Bundle files are downloaded sequentially and saved in folder structure as shown in this example: downloads\bundleName\bookName\specificBookFile.extension
 
 latest additions:
-- added sections: video and others to the default sections list to download (several software bundles use those)
-- added ability to override default, add, remove download platforms/sections
-- single label and bundles with sections android, linux, mac, video, others were not downloading correctly
+- fixed section filtering for downloads with multiple OS options (e.g. windows, linux, mac, android)
 
 0.4.0 additions:
 - uses Humble Bundle API to access your downloads using '_simpleauth_sess' cookie (no Internet Explorer required anymore)

@@ -1,5 +1,5 @@
 #Requires -Version 3.0
-### HB DRM-Free bulk downloader 0.4.1 by https://github.com/mmarcincin
+### HB DRM-Free bulk downloader 0.4.2 by https://github.com/mmarcincin
 #$links = "links.txt"
 $invocation = (Get-Variable MyInvocation).Value
 $DownloadDirectory = Split-Path $invocation.MyCommand.Path
@@ -46,7 +46,7 @@ $titleErrorLog = 0
 $md5Errors = 0
 $notFoundErrors = 0
 
-write-host HB DRM-Free bulk downloader 0.4.1 by https://github.com/mmarcincin
+write-host HB DRM-Free bulk downloader 0.4.2 by https://github.com/mmarcincin
 write-host `nDownload directory`: $DownloadDirectory`n
 
 $ConCountr1 = 0
@@ -158,7 +158,7 @@ Get-Content $links | Foreach-Object {
 		if ($prefLabel.length -eq 0) { $prefLabel = $prefGLabels}
 		if (($prefLabel.length -eq 0) -and ($prefGLabels.length -eq 0)) { $prefLabel = "none" }
 		$prefLabels = $prefLabel.split(",")
-		write-host link: $requestLink
+		write-host `nlink: $requestLink
 		if ($prefSwitch -eq "1") { write-host preferred labels: $prefLabel } else { if ($prefSwitch -eq "0") { write-host download labels: $prefLabel }}
 		if ($strictSwitch -eq "0") { write-host strict mode: disabled } else { if ($strictSwitch -eq "1") { write-host strict mode: enabled }}
 		if ($md5Switch -eq "1") { write-host MD5 file check: enabled } else { if ($md5Switch -eq "0") { write-host MD5 file check: disabled }}
@@ -174,7 +174,7 @@ Get-Content $links | Foreach-Object {
 		#pause
 		
 		$bundleInfoLink = "https://www.humblebundle.com/api/v1/order/" + $requestLink.substring($requestLink.indexOf("?key=") + 5)
-		
+		#$bundleInfoLink = "https://www.humblebundle.com/api/v1/order/PVSAUaSVvFds23Px"
 		[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 		$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession    
 		$cookie = New-Object System.Net.Cookie 
@@ -228,6 +228,7 @@ Get-Content $links | Foreach-Object {
 				}
 			}
 		}
+		#$hiddenDRMFreeEntries
 		
 		write-host ==============================================================
 		write-host $currentDownload "/" $downloadCount - $bundleTitle
@@ -235,7 +236,7 @@ Get-Content $links | Foreach-Object {
 		write-host --------------------------------------------------------------
 		$bundleLog = 0
 		$bundleErrorLog = 0
-
+		
 		if (($statusCode -eq 200) -and (($bundleInfoJson.subproducts.length -eq 0) -or ($hiddenDRMFreeEntries -eq $bundleInfoJson.subproducts.length))) {
 			write-host "`nNo DRM-Free content detected for this bundle.`n"
 		}
@@ -269,81 +270,85 @@ Get-Content $links | Foreach-Object {
 		$hbCounter = 0
 		$hb = $bundleInfoJson.subproducts
 		for ($i = 0; $i -lt $hb.length; $i++) {
-			if (($allDownPlatforms -eq 1) -or (($includeDownPlatforms.indexOf($hb[$i].downloads.platform) -ne -1) -and ($excludeDownPlatforms.indexOf($hb[$i].downloads.platform) -eq -1))) {
-				$curTitle = $hb[$i]
-				$humbleName = [Text.Encoding]::ASCII.GetString([Text.Encoding]::GetEncoding("Cyrillic").GetBytes($curTitle.human_name))
-				$humbleTitle = $humbleName -replace '[^a-zA-Z0-9/_/''/\-/ ]', '_'
-				$humbleTitle = $humbleTitle -replace '/', '_'
-				$humbleTitle = $humbleTitle.trim()
-				#$humblePublisher = $curTitle.getElementsByClassName("subtitle")[0].getElementsByTagName("a")[0].innerText
-				
-				$titleList.Add($humbleTitle) > $null
-				#$publisherList.Add($humblePublisher) > $null
-				
-				$downAlready = -1
-				
-				if ($curTitle.downloads.download_struct.url.web.length -gt 0) {
-					$downLabels = $curTitle.downloads.download_struct
-					$downLabelsLength = $curTitle.downloads.download_struct.length; if ($downLabelsLength -eq $null) { $downLabelsLength = 1 }
-					for ($j = 0; $j -lt $prefLabels.length; $j++) {
-						for ($k = $downLabelsLength-1; $k -ge 0; $k--) {
-							if (($downAlready -eq "1") -and ($prefSwitch -eq "1") -and ($prefLabels[0].ToLower().trim() -ne "none")) { break; }
-							$curLabel = $downLabels[$k].name
-							if (($curLabel.ToLower() -eq $prefLabels[$j].ToLower().trim()) -or ($prefLabels[0].ToLower().trim() -eq "none")) {
-								$downAlready = 1
-								
-								if ($directDownloadSwitch -eq 1) {$downLink = $downLabels[$k].url.web} else {$downLink = $downLabels[$k].url.bittorrent}
-								$md5c = $downLabels[$k].md5
-								$md5ct = $md5c.trim()
-								$downName = $downLink.split("?")[0].split("/")
-								$downTitle = $downName[$downName.length-1].trim()
-								if (($fileLimitLengthCheck -gt 0) -and ($folderTitleLengthCheck -ge 0) -and ($humbleTitle.length -gt $folderTitleLengthCheck)) {
-									$downTitleExt = $downTitle.substring($downTitle.lastIndexOf("."))
-									$downTitle = $downTitle.substring(0, $downTitle.lastIndexOf("."))
-									if (($downTitle.length + $downTitleExt.length) -gt $fileLimitLengthCheck) {
-										$downTitle = $downTitle.substring(0, $fileLimitLengthCheck - $downTitleExt.length) + $downTitleExt
+			$curTitle = $hb[$i]
+			$humbleName = [Text.Encoding]::ASCII.GetString([Text.Encoding]::GetEncoding("Cyrillic").GetBytes($curTitle.human_name))
+			$humbleTitle = $humbleName -replace '[^a-zA-Z0-9/_/''/\-/ ]', '_'
+			$humbleTitle = $humbleTitle -replace '/', '_'
+			$humbleTitle = $humbleTitle.trim()
+			#$humblePublisher = $curTitle.getElementsByClassName("subtitle")[0].getElementsByTagName("a")[0].innerText
+			
+			$titleList.Add($humbleTitle) > $null
+			#$publisherList.Add($humblePublisher) > $null
+			
+			$downloadsArray = $curTitle.downloads
+			for ($s = 0; $s -lt $downloadsArray.length; $s++) {
+				if (($allDownPlatforms -eq 1) -or (($includeDownPlatforms.indexOf($downloadsArray[$s].platform) -ne -1) -and ($excludeDownPlatforms.indexOf($downloadsArray[$s].platform) -eq -1))) {
+					$downAlready = -1
+					if ($downloadsArray[$s].download_struct.url.web.length -gt 0) {
+						$downLabels = $downloadsArray[$s].download_struct
+						$downLabelsLength = $downloadsArray[$s].download_struct.length; if ($downLabelsLength -eq $null) { $downLabelsLength = 1 }
+						for ($j = 0; $j -lt $prefLabels.length; $j++) {
+							for ($k = $downLabelsLength-1; $k -ge 0; $k--) {
+								if (($downAlready -eq "1") -and ($prefSwitch -eq "1") -and ($prefLabels[0].ToLower().trim() -ne "none")) { break; }
+								$curLabel = $downLabels[$k].name
+								if (($curLabel.ToLower() -eq $prefLabels[$j].ToLower().trim()) -or ($prefLabels[0].ToLower().trim() -eq "none")) {
+									$downAlready = 1
+									
+									if ($directDownloadSwitch -eq 1) {$downLink = $downLabels[$k].url.web} else {$downLink = $downLabels[$k].url.bittorrent}
+									$md5c = $downLabels[$k].md5
+									$md5ct = $md5c.trim()
+									$downName = $downLink.split("?")[0].split("/")
+									$downTitle = $downName[$downName.length-1].trim()
+									if (($fileLimitLengthCheck -gt 0) -and ($folderTitleLengthCheck -ge 0) -and ($humbleTitle.length -gt $folderTitleLengthCheck)) {
+										$downTitleExt = $downTitle.substring($downTitle.lastIndexOf("."))
+										$downTitle = $downTitle.substring(0, $downTitle.lastIndexOf("."))
+										if (($downTitle.length + $downTitleExt.length) -gt $fileLimitLengthCheck) {
+											$downTitle = $downTitle.substring(0, $fileLimitLengthCheck - $downTitleExt.length) + $downTitleExt
+										}
 									}
+									
+									$downTitleList.Add($downTitle) > $null
+									$downLinkList.Add($downLink) > $null
+									$curLabelList.Add($curLabel) > $null
+									$md5List.Add($md5ct) > $null
 								}
-								
-								$downTitleList.Add($downTitle) > $null
-								$downLinkList.Add($downLink) > $null
-								$curLabelList.Add($curLabel) > $null
-								$md5List.Add($md5ct) > $null
-							}
-						}
-					}
-					
-					### if preferred label is not found, it'll download the first label unless %strict global switch is applied
-					if (($downAlready -eq "-1") -and ($strictSwitch -eq "0")) {
-						#write-host `-`- Preferred label not found`, downloading first label `-`-
-						$curLabel = $downLabels[$downLabelsLength-1].name
-						if ($directDownloadSwitch -eq 1) { $downLink = $downLabels[$downLabelsLength-1].url.web } else { $downLink = $downLabels[$downLabelsLength-1].url.bittorrent }
-						$md5c = $downLabels[$downLabelsLength-1].md5
-						$md5ct = $md5c.trim()
-						$downName = $downLink.split("?")[0].split("/")
-						$downTitle = $downName[$downName.length-1].trim()
-						if (($fileLimitLengthCheck -gt 0) -and ($folderTitleLengthCheck -gt 0) -and ($humbleTitle.length -gt $folderTitleLengthCheck)) {
-							$downTitleExt = $downTitle.substring($downTitle.lastIndexOf("."))
-							$downTitle = $downTitle.substring(0, $downTitle.lastIndexOf("."))
-							if (($downTitle.length + $downTitleExt.length) -gt $fileLimitLengthCheck) {
-								$downTitle = $downTitle.substring(0, $fileLimitLengthCheck - $downTitleExt.length) + $downTitleExt
 							}
 						}
 						
-						$downTitleList.Add($downTitle) > $null
-						$downLinkList.Add($downLink) > $null
-						$curLabelList.Add($curLabel) > $null
-						$md5List.Add($md5ct) > $null
+						### if preferred label is not found, it'll download the first label unless %strict global switch is applied
+						if (($downAlready -eq "-1") -and ($strictSwitch -eq "0")) {
+							#write-host `-`- Preferred label not found`, downloading first label `-`-
+							$curLabel = $downLabels[$downLabelsLength-1].name
+							if ($directDownloadSwitch -eq 1) { $downLink = $downLabels[$downLabelsLength-1].url.web } else { $downLink = $downLabels[$downLabelsLength-1].url.bittorrent }
+							$md5c = $downLabels[$downLabelsLength-1].md5
+							$md5ct = $md5c.trim()
+							$downName = $downLink.split("?")[0].split("/")
+							$downTitle = $downName[$downName.length-1].trim()
+							if (($fileLimitLengthCheck -gt 0) -and ($folderTitleLengthCheck -gt 0) -and ($humbleTitle.length -gt $folderTitleLengthCheck)) {
+								$downTitleExt = $downTitle.substring($downTitle.lastIndexOf("."))
+								$downTitle = $downTitle.substring(0, $downTitle.lastIndexOf("."))
+								if (($downTitle.length + $downTitleExt.length) -gt $fileLimitLengthCheck) {
+									$downTitle = $downTitle.substring(0, $fileLimitLengthCheck - $downTitleExt.length) + $downTitleExt
+								}
+							}
+							
+							$downTitleList.Add($downTitle) > $null
+							$downLinkList.Add($downLink) > $null
+							$curLabelList.Add($curLabel) > $null
+							$md5List.Add($md5ct) > $null
+						}
 					}
-
-					$downTitleList.Add($hbCounter) > $null
-					$downLinkList.Add($hbCounter) > $null
-					$curLabelList.Add($hbCounter) > $null
-					$md5List.Add($hbCounter) > $null
-					$hbCounter++
 				}
 			}
+			if ($curTitle.downloads.download_struct.url.web.length -gt 0) {
+				$downTitleList.Add($hbCounter) > $null
+				$downLinkList.Add($hbCounter) > $null
+				$curLabelList.Add($hbCounter) > $null
+				$md5List.Add($hbCounter) > $null
+				$hbCounter++
+			}
 		}
+	
 		#$downTitleList
 		#pause
 		### download section
@@ -507,12 +512,12 @@ Get-Content $links | Foreach-Object {
 			}
 		}
 		
-	Remove-Item "$temp\*" -Recurse
-	write-host ==============================================================
-	echo "==============================================================" | Out-File $logAll -append
-	echo "==============================================================" | Out-File $logError -append
+		Remove-Item "$temp\*" -Recurse
+		write-host ==============================================================
+		echo "==============================================================" | Out-File $logAll -append
+		echo "==============================================================" | Out-File $logError -append
 	
-	Start-Sleep -Seconds 4
+		Start-Sleep -Seconds 4
 	} else {
 		if ($_.indexOf("#") -eq "0") {
 			$prefGLabels = $_.split("#")[1]

@@ -1,5 +1,11 @@
 # HB DRM-Free bulk downloader
+Download link:
 https://github.com/mmarcincin/HB-DRM-free-bulk-downloader/archive/master.zip
+----------------------
+HB DRM-free bulk downloader 0.4.2
+----------------------
+- fixed section filtering for downloads with multiple OS (e.g. windows, linux, mac, android)
+
 ----------------------
 HB DRM-free bulk downloader 0.4.1
 ----------------------
