@@ -89,6 +89,43 @@ If (!(Test-Path $logError)){
 	Get-Date -Format "yyyy-MM-dd dddd HH:mm K" | Out-File $logError
 }
 
+function newdownfile($url, $filename)  
+{
+	Write-Host -NoNewline "Downloading $($url), "
+	if (Get-Command "curl.exe" -ErrorAction SilentlyContinue)
+	{
+		Write-Host "using curl.exe"
+		do
+		{
+			#curl.exe --output "$($filename)" --continue-at - --retry 999 --retry-max-time 0 --retry-connrefused --retry-all-errors "$($url)"
+			curl.exe --output "$($filename)" --continue-at - --retry 999 --retry-max-time 0 --retry-connrefused "$($url)"
+			#curl.exe --output "$($filename)" --continue-at - "$($url)"
+			$rc=$?
+		}
+		while (!$rc)
+#		if (!$?)
+#		{
+#			Write-Host "Cannot download $url using curl.exe"
+#		}
+	}
+	else
+	{
+		Write-Host "using System.Net.WebClient"
+		$wc = New-Object System.Net.WebClient  
+		try  
+		{  
+			$wc.DownloadFile($url, $filename)  
+		}  
+		catch [System.Net.WebException]  
+		{  
+			Write-Host("Cannot download $url")  
+		}   
+		finally  
+		{    
+			$wc.Dispose()  
+		}  
+	}
+}
 
 function downfile($url, $filename)  
 {  
@@ -378,7 +415,7 @@ Get-Content $links | Foreach-Object {
 				If (!(Test-Path $DownloadDirectory\$bundleTitle\$humbleTitle\$downTitle)){
 					#$wc.DownloadFile($downLink, $downDest)
 					If (!(Test-Path $temp\$bundleTitle\$humbleTitle)){ New-Item -ItemType directory -Path $temp\$bundleTitle\$humbleTitle | Out-Null }
-					downFile $downLink $downDest
+					newdownFile $downLink $downDest
 					### md5 check and output to LOG files
 					if (($md5Switch -eq 1 -or !(Test-Path $downDest)) -and $directDownloadSwitch -eq 1) {
 						$md5f = md5hash("$downDest")
