@@ -6,8 +6,9 @@ $DownloadDirectory = Split-Path $invocation.MyCommand.Path
 ### expansion for 260+ length paths \\?\
 	$DownloadDirectory = "\\?\"+"$DownloadDirectory"
 $links = "$($DownloadDirectory)\links.txt"
-$logAll = "$($DownloadDirectory)\LOG-all.txt"
-$logError = "$($DownloadDirectory)\LOG-error.txt"
+$runTime = Get-Date -Format "yyyyMMddHHmm"
+$logAll = "$($DownloadDirectory)\LOG-all-$($runTime).txt"
+$logError = "$($DownloadDirectory)\LOG-error-$($runTime).txt"
 $DownloadDirectory = "$($DownloadDirectory)\downloads"
 #$DownloadDirectory = "downloads"
 $temp = "$DownloadDirectory\temp"
