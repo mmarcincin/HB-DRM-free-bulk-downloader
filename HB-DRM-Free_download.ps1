@@ -508,7 +508,11 @@ Get-Content $links | Foreach-Object {
 			If (!(Test-Path $DownloadDirectory\$bundleTitle\$humbleTitle)){
 			New-Item -ItemType directory -Path $DownloadDirectory\$bundleTitle\$humbleTitle | Out-Null
 			}
-			Move-Item -Path $temp\$bundleTitle\$humbleTitle\* -Destination $DownloadDirectory\$bundleTitle\$humbleTitle
+			if (Test-Path $temp\$bundleTitle\$humbleTitle\*){
+				$downloadBundlePath=Get-Item "$DownloadDirectory\$bundleTitle"
+				$downloadBundlePath.LastWriteTime=(Get-Date)
+				Move-Item -Path $temp\$bundleTitle\$humbleTitle\* -Destination $DownloadDirectory\$bundleTitle\$humbleTitle
+			}
 			}
 		}
 		
