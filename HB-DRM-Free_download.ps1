@@ -573,6 +573,8 @@ Get-Content $links | Foreach-Object {
 		if ($_.indexOf("^") -eq "0") {
 			$authSessCookie = $_.split("^")[1].trim()
 		}
+		if ($_.indexOf(";") -eq "0") {
+		}
 		if ($_.indexOf("~") -eq "0") {
 			$saveFork = $_.split("~")[1].split(",")
 			for ($i = 0; $i -lt $saveFork.length; $i++) {
