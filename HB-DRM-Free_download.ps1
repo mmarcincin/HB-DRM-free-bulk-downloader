@@ -1,14 +1,14 @@
 #Requires -Version 3.0
-### HB DRM-Free bulk downloader 0.4.2 by https://github.com/mmarcincin
+### HB DRM-Free bulk downloader 0.4.3 by https://github.com/mmarcincin
 #$links = "links.txt"
 $invocation = (Get-Variable MyInvocation).Value
-$DownloadDirectory = Split-Path $invocation.MyCommand.Path
+$RunDirectory = Split-Path $invocation.MyCommand.Path
 ### expansion for 260+ length paths \\?\
-	$DownloadDirectory = "\\?\"+"$DownloadDirectory"
-$links = "$($DownloadDirectory)\links.txt"
-$logAll = "$($DownloadDirectory)\LOG-all.txt"
-$logError = "$($DownloadDirectory)\LOG-error.txt"
-$DownloadDirectory = "$($DownloadDirectory)\downloads"
+	$RunDirectory = "\\?\"+"$RunDirectory"
+$links = "$($RunDirectory)\links.txt"
+$logAll = "$($RunDirectory)\LOG-all.txt"
+$logError = "$($RunDirectory)\LOG-error.txt"
+$DownloadDirectory = "$($RunDirectory)\downloads"
 #$DownloadDirectory = "downloads"
 $temp = "$DownloadDirectory\temp"
 
@@ -45,8 +45,10 @@ $bundleErrorLog = 0
 $titleErrorLog = 0
 $md5Errors = 0
 $notFoundErrors = 0
+$logTimeSwitch = 0
+$logTimeSwitchRunOnce = 0
 
-write-host HB DRM-Free bulk downloader 0.4.2 by https://github.com/mmarcincin
+write-host HB DRM-Free bulk downloader 0.4.3 by https://github.com/mmarcincin
 write-host `nDownload directory`: $DownloadDirectory`n
 
 $ConCountr1 = 0
@@ -80,13 +82,13 @@ If (!(Test-Path $links)){
 If ((Test-Path $logAll)){ Remove-Item $logAll }
 If (!(Test-Path $logAll)){
 	New-Item -ItemType file -Path $logAll | Out-Null
-	Get-Date -Format "yyyy-MM-dd dddd HH:mm K" | Out-File $logAll
+	Get-Date -Format "yyyy-MM-dd dddd HH:mm:ss K" | Out-File $logAll
 }
 
 If ((Test-Path $logError)){ Remove-Item $logError }
 If (!(Test-Path $logError)){
 	New-Item -ItemType file -Path $logError | Out-Null
-	Get-Date -Format "yyyy-MM-dd dddd HH:mm K" | Out-File $logError
+	Get-Date -Format "yyyy-MM-dd dddd HH:mm:ss K" | Out-File $logError
 }
 
 
@@ -168,7 +170,35 @@ Get-Content $links | Foreach-Object {
 		if ($fileLimitLengthCheck -eq "0") { write-host "conditional filename shortening: disabled" } else { write-host "conditional filename shortening:`nif title length is longer than $folderTitleLengthCheck, shorten filename length including extension to $fileLimitLengthCheck" }
 		if ($allDownPlatforms -ne "1") { write-host "included sections: $($includeDownPlatforms)" } else { write-host "included sections: all sections" }
 		if ($allDownPlatforms -ne "1") { write-host "excluded sections: $($excludeDownPlatforms)" } else { write-host "excluded sections: disabled" }
+		if ($logTimeSwitch -eq 0) { write-host "LOG method: in script folder, shared log file overwritten with each script run" } else { if ($logTimeSwitch -eq "1") { write-host "LOG method: in logs folder with timestamp" }  else { write-host "LOG method: in logs folder with UTC timestamp" } }
 		
+		if ($logTimeSwitch -gt 0 -and $logTimeSwitchRunOnce -eq 0) {
+			$logDirectory = "$($RunDirectory)\logs"
+			If (!(Test-Path $logDirectory)){
+				New-Item -ItemType directory -Path $logDirectory | Out-Null
+			}
+			if ($logTimeSwitch -eq 2) {
+				$logRunTime = [datetime]::Now.ToUniversalTime().ToString("yyyy-MM-dd-HHmmss") + "Z"
+			} else {
+				$logRunTime = Get-Date -Format "yyyy-MM-dd-HHmmss"
+			}
+			
+			$logAll = "$($logDirectory)\LOG-all-$($logRunTime).txt"
+			$logError = "$($logDirectory)\LOG-error-$($logRunTime).txt"
+			
+			If ((Test-Path $logAll)){ Remove-Item $logAll }
+			If (!(Test-Path $logAll)){
+				New-Item -ItemType file -Path $logAll | Out-Null
+				Get-Date -Format "yyyy-MM-dd dddd HH:mm:ss K" | Out-File $logAll
+			}
+
+			If ((Test-Path $logError)){ Remove-Item $logError }
+			If (!(Test-Path $logError)){
+				New-Item -ItemType file -Path $logError | Out-Null
+				Get-Date -Format "yyyy-MM-dd dddd HH:mm:ss K" | Out-File $logError
+			}
+			$logTimeSwitchRunOnce = 1
+		}
 		
 		#Start-Sleep -Seconds 1
 		#pause
@@ -271,76 +301,77 @@ Get-Content $links | Foreach-Object {
 		$hb = $bundleInfoJson.subproducts
 		for ($i = 0; $i -lt $hb.length; $i++) {
 			$curTitle = $hb[$i]
-			$humbleName = [Text.Encoding]::ASCII.GetString([Text.Encoding]::GetEncoding("Cyrillic").GetBytes($curTitle.human_name))
-			$humbleTitle = $humbleName -replace '[^a-zA-Z0-9/_/''/\-/ ]', '_'
-			$humbleTitle = $humbleTitle -replace '/', '_'
-			$humbleTitle = $humbleTitle.trim()
-			#$humblePublisher = $curTitle.getElementsByClassName("subtitle")[0].getElementsByTagName("a")[0].innerText
-			
-			$titleList.Add($humbleTitle) > $null
-			#$publisherList.Add($humblePublisher) > $null
-			
-			$downloadsArray = $curTitle.downloads
-			for ($s = 0; $s -lt $downloadsArray.length; $s++) {
-				if (($allDownPlatforms -eq 1) -or (($includeDownPlatforms.indexOf($downloadsArray[$s].platform) -ne -1) -and ($excludeDownPlatforms.indexOf($downloadsArray[$s].platform) -eq -1))) {
-					$downAlready = -1
-					if ($downloadsArray[$s].download_struct.url.web.length -gt 0) {
-						$downLabels = $downloadsArray[$s].download_struct
-						$downLabelsLength = $downloadsArray[$s].download_struct.length; if ($downLabelsLength -eq $null) { $downLabelsLength = 1 }
-						for ($j = 0; $j -lt $prefLabels.length; $j++) {
-							for ($k = $downLabelsLength-1; $k -ge 0; $k--) {
-								if (($downAlready -eq "1") -and ($prefSwitch -eq "1") -and ($prefLabels[0].ToLower().trim() -ne "none")) { break; }
-								$curLabel = $downLabels[$k].name
-								if (($curLabel.ToLower() -eq $prefLabels[$j].ToLower().trim()) -or ($prefLabels[0].ToLower().trim() -eq "none")) {
-									$downAlready = 1
-									
-									if ($directDownloadSwitch -eq 1) {$downLink = $downLabels[$k].url.web} else {$downLink = $downLabels[$k].url.bittorrent}
-									$md5c = $downLabels[$k].md5
-									$md5ct = $md5c.trim()
-									$downName = $downLink.split("?")[0].split("/")
-									$downTitle = $downName[$downName.length-1].trim()
-									if (($fileLimitLengthCheck -gt 0) -and ($folderTitleLengthCheck -ge 0) -and ($humbleTitle.length -gt $folderTitleLengthCheck)) {
-										$downTitleExt = $downTitle.substring($downTitle.lastIndexOf("."))
-										$downTitle = $downTitle.substring(0, $downTitle.lastIndexOf("."))
-										if (($downTitle.length + $downTitleExt.length) -gt $fileLimitLengthCheck) {
-											$downTitle = $downTitle.substring(0, $fileLimitLengthCheck - $downTitleExt.length) + $downTitleExt
+			if ($curTitle.downloads.download_struct.url.web.length -gt 0) {
+				$humbleName = [Text.Encoding]::ASCII.GetString([Text.Encoding]::GetEncoding("Cyrillic").GetBytes($curTitle.human_name))
+				$humbleTitle = $humbleName -replace '[^a-zA-Z0-9/_/''/\-/ ]', '_'
+				$humbleTitle = $humbleTitle -replace '/', '_'
+				$humbleTitle = $humbleTitle.trim()
+				#$humblePublisher = $curTitle.getElementsByClassName("subtitle")[0].getElementsByTagName("a")[0].innerText
+				
+				$titleList.Add($humbleTitle) > $null
+				#$publisherList.Add($humblePublisher) > $null
+				
+				$downloadsArray = $curTitle.downloads
+				for ($s = 0; $s -lt $downloadsArray.length; $s++) {
+					if (($allDownPlatforms -eq 1) -or (($includeDownPlatforms.indexOf($downloadsArray[$s].platform) -ne -1) -and ($excludeDownPlatforms.indexOf($downloadsArray[$s].platform) -eq -1))) {
+						$downAlready = -1
+						if ($downloadsArray[$s].download_struct.url.web.length -gt 0) {
+							$downLabels = $downloadsArray[$s].download_struct
+							$downLabelsLength = $downloadsArray[$s].download_struct.length; if ($downLabelsLength -eq $null) { $downLabelsLength = 1 }
+							for ($j = 0; $j -lt $prefLabels.length; $j++) {
+								for ($k = $downLabelsLength-1; $k -ge 0; $k--) {
+									if (($downAlready -eq "1") -and ($prefSwitch -eq "1") -and ($prefLabels[0].ToLower().trim() -ne "none")) { break; }
+									$curLabel = $downLabels[$k].name
+									if (($curLabel.ToLower() -eq $prefLabels[$j].ToLower().trim()) -or ($prefLabels[0].ToLower().trim() -eq "none")) {
+										$downAlready = 1
+										
+										if ($directDownloadSwitch -eq 1) { $downLink = $downLabels[$k].url.web } else { $downLink = $downLabels[$k].url.bittorrent }
+										$md5c = $downLabels[$k].md5
+										$md5ct = $md5c.trim()
+										$downName = $downLink.split("?")[0].split("/")
+										$downTitle = $downName[$downName.length-1].trim()
+										if (($fileLimitLengthCheck -gt 0) -and ($folderTitleLengthCheck -ge 0) -and ($humbleTitle.length -gt $folderTitleLengthCheck)) {
+											$downTitleExt = $downTitle.substring($downTitle.lastIndexOf("."))
+											$downTitle = $downTitle.substring(0, $downTitle.lastIndexOf("."))
+											if (($downTitle.length + $downTitleExt.length) -gt $fileLimitLengthCheck) {
+												$downTitle = $downTitle.substring(0, $fileLimitLengthCheck - $downTitleExt.length) + $downTitleExt
+											}
 										}
+										
+										$downTitleList.Add($downTitle) > $null
+										$downLinkList.Add($downLink) > $null
+										$curLabelList.Add($curLabel) > $null
+										$md5List.Add($md5ct) > $null
 									}
-									
-									$downTitleList.Add($downTitle) > $null
-									$downLinkList.Add($downLink) > $null
-									$curLabelList.Add($curLabel) > $null
-									$md5List.Add($md5ct) > $null
-								}
-							}
-						}
-						
-						### if preferred label is not found, it'll download the first label unless %strict global switch is applied
-						if (($downAlready -eq "-1") -and ($strictSwitch -eq "0")) {
-							#write-host `-`- Preferred label not found`, downloading first label `-`-
-							$curLabel = $downLabels[$downLabelsLength-1].name
-							if ($directDownloadSwitch -eq 1) { $downLink = $downLabels[$downLabelsLength-1].url.web } else { $downLink = $downLabels[$downLabelsLength-1].url.bittorrent }
-							$md5c = $downLabels[$downLabelsLength-1].md5
-							$md5ct = $md5c.trim()
-							$downName = $downLink.split("?")[0].split("/")
-							$downTitle = $downName[$downName.length-1].trim()
-							if (($fileLimitLengthCheck -gt 0) -and ($folderTitleLengthCheck -gt 0) -and ($humbleTitle.length -gt $folderTitleLengthCheck)) {
-								$downTitleExt = $downTitle.substring($downTitle.lastIndexOf("."))
-								$downTitle = $downTitle.substring(0, $downTitle.lastIndexOf("."))
-								if (($downTitle.length + $downTitleExt.length) -gt $fileLimitLengthCheck) {
-									$downTitle = $downTitle.substring(0, $fileLimitLengthCheck - $downTitleExt.length) + $downTitleExt
 								}
 							}
 							
-							$downTitleList.Add($downTitle) > $null
-							$downLinkList.Add($downLink) > $null
-							$curLabelList.Add($curLabel) > $null
-							$md5List.Add($md5ct) > $null
+							### if preferred label is not found, it'll download the first label unless %strict global switch is applied
+							if (($downAlready -eq "-1") -and ($strictSwitch -eq "0")) {
+								#write-host `-`- Preferred label not found`, downloading first label `-`-
+								$curLabel = $downLabels[$downLabelsLength-1].name
+								if ($directDownloadSwitch -eq 1) { $downLink = $downLabels[$downLabelsLength-1].url.web } else { $downLink = $downLabels[$downLabelsLength-1].url.bittorrent }
+								$md5c = $downLabels[$downLabelsLength-1].md5
+								$md5ct = $md5c.trim()
+								$downName = $downLink.split("?")[0].split("/")
+								$downTitle = $downName[$downName.length-1].trim()
+								if (($fileLimitLengthCheck -gt 0) -and ($folderTitleLengthCheck -gt 0) -and ($humbleTitle.length -gt $folderTitleLengthCheck)) {
+									$downTitleExt = $downTitle.substring($downTitle.lastIndexOf("."))
+									$downTitle = $downTitle.substring(0, $downTitle.lastIndexOf("."))
+									if (($downTitle.length + $downTitleExt.length) -gt $fileLimitLengthCheck) {
+										$downTitle = $downTitle.substring(0, $fileLimitLengthCheck - $downTitleExt.length) + $downTitleExt
+									}
+								}
+								
+								$downTitleList.Add($downTitle) > $null
+								$downLinkList.Add($downLink) > $null
+								$curLabelList.Add($curLabel) > $null
+								$md5List.Add($md5ct) > $null
+							}
 						}
 					}
 				}
-			}
-			if ($curTitle.downloads.download_struct.url.web.length -gt 0) {
+				
 				$downTitleList.Add($hbCounter) > $null
 				$downLinkList.Add($hbCounter) > $null
 				$curLabelList.Add($hbCounter) > $null
@@ -374,7 +405,7 @@ Get-Content $links | Foreach-Object {
 				write-host $curLabel - $downTitle
 
 				$downDest = "$temp\$bundleTitle\$humbleTitle\$downTitle"
-
+				
 				If (!(Test-Path $DownloadDirectory\$bundleTitle\$humbleTitle\$downTitle)){
 					#$wc.DownloadFile($downLink, $downDest)
 					If (!(Test-Path $temp\$bundleTitle\$humbleTitle)){ New-Item -ItemType directory -Path $temp\$bundleTitle\$humbleTitle | Out-Null }
@@ -505,10 +536,13 @@ Get-Content $links | Foreach-Object {
 					}
 				}
 			
-			If (!(Test-Path $DownloadDirectory\$bundleTitle\$humbleTitle)){
-			New-Item -ItemType directory -Path $DownloadDirectory\$bundleTitle\$humbleTitle | Out-Null
-			}
-			Move-Item -Path $temp\$bundleTitle\$humbleTitle\* -Destination $DownloadDirectory\$bundleTitle\$humbleTitle
+				If (!(Test-Path $DownloadDirectory\$bundleTitle\$humbleTitle)){
+					New-Item -ItemType directory -Path $DownloadDirectory\$bundleTitle\$humbleTitle | Out-Null
+				}
+				if (Test-Path $temp\$bundleTitle\$humbleTitle\*){
+					(Get-Item "$DownloadDirectory\$bundleTitle").LastWriteTime = (Get-Date)
+					Move-Item -Path $temp\$bundleTitle\$humbleTitle\* -Destination $DownloadDirectory\$bundleTitle\$humbleTitle
+				}
 			}
 		}
 		
@@ -557,6 +591,8 @@ Get-Content $links | Foreach-Object {
 				"md5-" {$md5Switch = 0; break}
 				"md5s-" {$md5sSwitch = 0; break}
 				"md5s+" {$md5sSwitch = 1; break}
+				"logtime" {$logTimeSwitch = 1; break}
+				"logtimeutc" {$logTimeSwitch = 2; break}
 				"genlist" {$genListSwitch = 1; break} # not in use
 			}
 			}

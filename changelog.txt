@@ -2,6 +2,14 @@
 Download link:
 https://github.com/mmarcincin/HB-DRM-free-bulk-downloader/archive/master.zip
 ----------------------
+HB DRM-free bulk downloader 0.4.3
+----------------------
+- based on reports and suggestions of https://github.com/cowbutt:
+	- fixed unexpected input in bundles like 'HUMBLE BUNDLE WITH ANDROID 5' and 'HUMBLE BUNDLE: PC AND ANDROID 8'
+	- added option to add timestamp to log files (more info in README, md5 global switch)
+	- bundle folder modified date updates when new content is downloaded inside
+
+----------------------
 HB DRM-free bulk downloader 0.4.2
 ----------------------
 - fixed section filtering for downloads with multiple OS (e.g. windows, linux, mac, android)

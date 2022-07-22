@@ -9,12 +9,15 @@ It's a powershell script which allows you to download DRM-Free content (e-books,
 To install newer Powershell on Windows 7, visit this link: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-windows-powershell?view=powershell-6
 
 ----------------------
-HB DRM-Free bulk downloader 0.4.2
+HB DRM-Free bulk downloader 0.4.3
 ----------------------
 Bundle files are downloaded sequentially and saved in folder structure as shown in this example: downloads\bundleName\bookName\specificBookFile.extension
 
 latest additions:
-- fixed section filtering for downloads with multiple OS options (e.g. windows, linux, mac, android)
+- based on reports and suggestions of https://github.com/cowbutt:
+	- fixed unexpected input in bundles like 'HUMBLE BUNDLE WITH ANDROID 5' and 'HUMBLE BUNDLE: PC AND ANDROID 8'
+	- added option to add timestamp to log files (more info in README, md5 global switch)
+	- bundle folder modified date updates when new content is downloaded inside
 
 0.4.0 additions:
 - uses Humble Bundle API to access your downloads using '_simpleauth_sess' cookie (no Internet Explorer required anymore)
@@ -52,6 +55,17 @@ b) browser settings option
 
 You can have multiple '_simpleauth_sess' cookie text strings (if you need to download the DRM-Free files from some other humble bundle account) in your links.txt file.
 
+comments in links.txt
+----------------------
+Any line which doesn't start with switch character like ~,!,@,#,$,%,^,* or https://www.humblebundle.com/downloads?key= is ignored/treated like comment line.
+Because of that you can for example put titles of bundles in links.txt like this:
+```
+^_simpleauth_sess cookie
+#pdf
+Humble Book Bundle: Programming Cookbooks by O'Reilly
+https://www.humblebundle.com/downloads?key=XXXXXXXXXXXXXXXX
+```
+
 Switches
 ----------------------
 To specify your preferred label/extension/format for link only, use:
@@ -85,6 +99,10 @@ md5 global switches:
 - !md5s+ (default, enable md5 hash check/file integrity of previously stored/downloaded files in addition to the files you just downloaded, disabled if you use !md5-)
 - !md5s- (disable md5 hash check/file integrity of previously stored/downloaded files)
 - md5 file integrity check works for log purposes only, no further actions are taken for now
+- !logtime (log files are saved in 'logs' folder with date and time in format LOG-all-yyyy-MM-dd-HHmmss.txt and LOG-error-yyyy-MM-dd-HHmmss.txt)
+- !logtimeutc (log files are saved in 'logs' folder with UTC date and time in format LOG-all-yyyy-MM-dd-HHmmssZ.txt and LOG-error-yyyy-MM-dd-HHmmssZ.txt)
+- unlike most switches !logtime and !logtimeutc are applied once per script execution and can't be modified for now (intentional)
+
 
 log files:
 - LOG-all.txt -- complete log(downloads + errors)
@@ -94,7 +112,7 @@ log files:
 preference global switches:
 - %normal (default, return to downloading at least 1 label)
 - %strict (download only your preferred label)
-
+-
 - %pref (default, download first found preferred label in list and skip others)
 - %all (download all preferred labels)
 
